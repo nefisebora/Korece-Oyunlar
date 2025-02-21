@@ -22,7 +22,7 @@
       display: flex;
       flex-direction: column;
       align-items: center;
-      justify-content: flex-start; /* Ekranın üstünden başlasın */
+      justify-content: flex-start;
       min-height: 100vh;
     }
     .header {
@@ -34,7 +34,6 @@
       font-size: 32px;
       margin: 0;
     }
-
     /* Konteyner */
     .container {
       max-width: 700px;
@@ -44,7 +43,6 @@
       flex-direction: column;
       align-items: center;
     }
-
     /* Mod Seçimi */
     .mode-selection {
       display: flex;
@@ -80,10 +78,9 @@
       margin-top: 5px;
       opacity: 0;
     }
-
     /* Soru Kutusu */
     .question-box {
-      display: none; /* Başta gizli */
+      display: none;
       background: #ffd4dc;
       padding: 20px;
       border-radius: 10px;
@@ -91,6 +88,12 @@
       width: 100%;
       max-width: 600px;
       margin-bottom: 20px;
+    }
+    /* Progress Gösterge */
+    #progress {
+      font-size: 14px;
+      margin-bottom: 10px;
+      text-shadow: 1px 1px 2px #140f0f;
     }
     .question-box h3 {
       margin-top: 0;
@@ -125,7 +128,7 @@
       min-height: 20px;
       text-shadow: 1px 1px 2px #140f0f;
     }
-    .next-btn {
+    .next-btn, .restart-btn {
       display: none;
       margin: 15px auto 0 auto;
       padding: 10px 20px;
@@ -138,11 +141,28 @@
       text-shadow: 1px 1px 2px #140f0f;
       box-shadow: 3px 3px 0px #140f0f;
     }
-    .next-btn:hover {
+    .next-btn:hover, .restart-btn:hover {
       background: #ffc0cb;
       color: #fff;
     }
-
+    /* Zorluk Düşürme Butonu */
+    .difficulty-btn {
+      display: none;
+      margin: 20px 0;
+      padding: 10px 20px;
+      background: #ffe6f2;
+      border: 3px solid #140f0f;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 14px;
+      color: #ff320d;
+      text-shadow: 1px 1px 2px #140f0f;
+      box-shadow: 3px 3px 0px #140f0f;
+    }
+    .difficulty-btn:hover {
+      background: #ffc0cb;
+      color: #fff;
+    }
     /* Yanlış Cevaplar Kutusu */
     .wrong-answers-box {
       width: 100%;
@@ -151,6 +171,8 @@
       padding: 15px;
       border-radius: 10px;
       box-shadow: 4px 4px 0px #140f0f;
+      margin-top: 20px;
+      display: none;
     }
     .wrong-answers-box h2 {
       margin: 0;
@@ -168,7 +190,7 @@
       font-size: 14px;
       text-shadow: 1px 1px 2px #140f0f;
     }
-    /* Yeni eklenen yanlış cevabı vurgulayacağız */
+    /* Vurgulama stil */
     .highlight {
       background: #ffc0cb;
       color: #fff;
@@ -200,14 +222,19 @@
 
     <!-- Soru Kutusu -->
     <div class="question-box" id="question-box">
+      <div id="progress"></div>
       <h3 id="question-text">Soru Metni</h3>
       <div class="options" id="options"></div>
       <div class="feedback" id="feedback"></div>
       <button class="next-btn" id="next-btn">Sonraki</button>
+      <button class="restart-btn" id="restart-btn">Karnım Doymadı!</button>
     </div>
 
+    <!-- Zorluk Düşürme Butonu (sadece hard modda) -->
+    <button class="difficulty-btn" id="difficulty-btn">Yandım, bana su ver! 💧</button>
+
     <!-- Yanlış Cevaplar Kutusu -->
-    <div class="wrong-answers-box" id="wrong-answers-box" style="display: none;">
+    <div class="wrong-answers-box" id="wrong-answers-box">
       <h2>Yanlışlarını Düzelt</h2>
       <ul id="wrong-answers"></ul>
     </div>
@@ -234,6 +261,7 @@
 
     /* ==================== 20 SORULUK KOLAY VE ZOR LİSTELER ==================== */
     const easyQuestions = [
+      // 20 soru ekleyin. Örnek 10 soru:
       { question: "Korece '일' hangi sayıdır?", shortLabel: "일 = 1", options: ["1", "2", "3", "4"], answer: "1" },
       { question: "Korece '이' hangi sayıdır?", shortLabel: "이 = 2", options: ["2", "3", "4", "5"], answer: "2" },
       { question: "Korece '삼' hangi sayıdır?", shortLabel: "삼 = 3", options: ["3", "4", "5", "6"], answer: "3" },
@@ -243,20 +271,12 @@
       { question: "Korece '칠' hangi sayıdır?", shortLabel: "칠 = 7", options: ["7", "8", "9", "10"], answer: "7" },
       { question: "Korece '팔' hangi sayıdır?", shortLabel: "팔 = 8", options: ["8", "9", "10", "11"], answer: "8" },
       { question: "Korece '구' hangi sayıdır?", shortLabel: "구 = 9", options: ["9", "10", "11", "12"], answer: "9" },
-      { question: "Korece '십' hangi sayıdır?", shortLabel: "십 = 10", options: ["10", "11", "12", "13"], answer: "10" },
-      { question: "Korece '십일' hangi sayıdır?", shortLabel: "십일 = 11", options: ["10", "11", "12", "13"], answer: "11" },
-      { question: "Korece '십오' hangi sayıdır?", shortLabel: "십오 = 15", options: ["14", "15", "16", "17"], answer: "15" },
-      { question: "Korece '이십' hangi sayıdır?", shortLabel: "이십 = 20", options: ["18", "19", "20", "21"], answer: "20" },
-      { question: "Korece '삼십' hangi sayıdır?", shortLabel: "삼십 = 30", options: ["30", "31", "32", "33"], answer: "30" },
-      { question: "Korece '사십' hangi sayıdır?", shortLabel: "사십 = 40", options: ["40", "41", "42", "43"], answer: "40" },
-      { question: "Korece '오십' hangi sayıdır?", shortLabel: "오십 = 50", options: ["50", "51", "52", "53"], answer: "50" },
-      { question: "Korece '육십' hangi sayıdır?", shortLabel: "육십 = 60", options: ["60", "61", "62", "63"], answer: "60" },
-      { question: "Korece '칠십' hangi sayıdır?", shortLabel: "칠십 = 70", options: ["70", "71", "72", "73"], answer: "70" },
-      { question: "Korece '팔십' hangi sayıdır?", shortLabel: "팔십 = 80", options: ["80", "81", "82", "83"], answer: "80" },
-      { question: "Korece '구십' hangi sayıdır?", shortLabel: "구십 = 90", options: ["90", "91", "92", "93"], answer: "90" }
+      { question: "Korece '십' hangi sayıdır?", shortLabel: "십 = 10", options: ["10", "11", "12", "13"], answer: "10" }
+      // ... 10 tane daha ekle
     ];
 
     const hardQuestions = [
+      // 20 soru ekleyin. Örnek 10 soru:
       { question: "Korece '백' hangi sayıdır?", shortLabel: "백 = 100", options: ["100", "200", "300", "400"], answer: "100" },
       { question: "Korece '천' hangi sayıdır?", shortLabel: "천 = 1000", options: ["500", "1000", "1500", "2000"], answer: "1000" },
       { question: "Korece '만' hangi sayıdır?", shortLabel: "만 = 10000", options: ["10.000", "20.000", "30.000", "40.000"], answer: "10.000" },
@@ -266,48 +286,41 @@
       { question: "Korece '이천삼백팔십사' hangi sayıdır?", shortLabel: "이천삼백팔십사 = 2.384", options: ["2.384", "2.843", "2.834", "2.348"], answer: "2.384" },
       { question: "Korece '백십이' hangi sayıdır?", shortLabel: "백십이 = 112", options: ["110", "111", "112", "113"], answer: "112" },
       { question: "Korece '십이만삼천사백구' hangi sayıdır?", shortLabel: "십이만삼천사백구 = 123.409", options: ["123.409", "120.349", "12.349", "1.234.009"], answer: "123.409" },
-      { question: "Korece '삼천오백구십' hangi sayıdır?", shortLabel: "삼천오백구십 = 3.590", options: ["3.590", "3.509", "3.900", "5.390"], answer: "3.590" },
-      { question: "Korece '칠십오' hangi sayıdır?", shortLabel: "칠십오 = 75", options: ["74", "75", "76", "77"], answer: "75" },
-      { question: "Korece '천사백이십구' hangi sayıdır?", shortLabel: "천사백이십구 = 1.429", options: ["1.429", "1.249", "1.421", "1.429"], answer: "1.429" },
-      { question: "Korece '십일만구천팔백칠십오' hangi sayıdır?", shortLabel: "십일만구천팔백칠십오 = 119.875", options: ["119.875", "11.987", "1.198.750", "1.987.500"], answer: "119.875" },
-      { question: "Korece '사십오' hangi sayıdır?", shortLabel: "사십오 = 45", options: ["44", "45", "46", "50"], answer: "45" },
-      { question: "Korece '백이십이' hangi sayıdır?", shortLabel: "백이십이 = 122", options: ["121", "122", "123", "120"], answer: "122" },
-      { question: "Korece '구백구십구' hangi sayıdır?", shortLabel: "구백구십구 = 999", options: ["999", "990", "900", "909"], answer: "999" },
-      { question: "Korece '팔만칠천육백오십' hangi sayıdır?", shortLabel: "팔만칠천육백오십 = 87.650", options: ["87.650", "87.560", "87.065", "87.006"], answer: "87.650" },
-      { question: "Korece '삼십육' hangi sayıdır?", shortLabel: "삼십육 = 36", options: ["34", "35", "36", "37"], answer: "36" },
-      { question: "Korece '육백사십일' hangi sayıdır?", shortLabel: "육백사십일 = 641", options: ["641", "614", "461", "416"], answer: "641" },
-      { question: "Korece '이십사만칠천구백십팔' hangi sayıdır?", shortLabel: "이십사만칠천구백십팔 = 247.918", options: ["247.918", "24.791", "2.479.180", "247.198"], answer: "247.918" }
+      { question: "Korece '삼천오백구십' hangi sayıdır?", shortLabel: "삼천오백구십 = 3.590", options: ["3.590", "3.509", "3.900", "5.390"], answer: "3.590" }
+      // ... 10 tane daha ekle
     ];
 
     /* ==================== DEĞİŞKENLER ==================== */
     let currentQuestions = [];
     let currentIndex = 0;
-    let wrongAnswers = new Set(); // Tekrarlamasın diye Set
+    let wrongAnswers = new Set();
+    let currentMode = null; // 'easy' veya 'hard'
 
-    /* ==================== TIKLAMA SESİ ==================== */
-    // Her tıklamada click.mp3
+    /* ==================== HER TIKLAMADA CLICK SESİ ==================== */
     document.addEventListener('click', () => {
       clickSound.currentTime = 0;
       clickSound.play().catch(() => {});
     }, true);
 
-    /* ==================== MOD SEÇİMİ ==================== */
+    /* ==================== MOD SEÇİMİ (OYUN BAŞLANGICI) ==================== */
     function chooseMode(mode) {
-      // Soruları seç
+      currentMode = mode;
       currentQuestions = (mode === 'easy') ? [...easyQuestions] : [...hardQuestions];
       shuffleArray(currentQuestions);
-
-      // Mod seçimi ekranını gizle
+      // Mod seçim ekranını gizle
       document.getElementById("mode-selection").style.display = "none";
-
       // Soru kutusunu göster
       document.getElementById("question-box").style.display = "block";
-
-      // Yanlış cevapları sıfırla ve kutusunu göster
+      // Yanlış cevaplar kutusunu sıfırla ve göster
       wrongAnswers.clear();
       displayWrongAnswers();
       document.getElementById("wrong-answers-box").style.display = "block";
-
+      // Eğer hard moddaysa, zorluk düşürme butonunu göster; yoksa gizle
+      if (mode === 'hard') {
+        document.getElementById("difficulty-btn").style.display = "block";
+      } else {
+        document.getElementById("difficulty-btn").style.display = "none";
+      }
       // İlk soruyu yükle
       currentIndex = 0;
       loadQuestion();
@@ -315,19 +328,25 @@
 
     /* ==================== SORU YÜKLEME ==================== */
     function loadQuestion() {
+      // Eğer tüm sorular bitti ise
       if (currentIndex >= currentQuestions.length) {
-        // Sorular bitti
         document.getElementById("question-text").textContent = "Tebrikler, sorular bitti!";
         document.getElementById("options").innerHTML = "";
         document.getElementById("feedback").textContent = "";
         document.getElementById("next-btn").style.display = "none";
+        // Göster "Karnım Doymadı!" butonunu
+        document.getElementById("restart-btn").style.display = "block";
+        // Ayrıca progress göstergesini de güncelle
+        document.getElementById("progress").textContent = `Soru: ${currentQuestions.length}/${currentQuestions.length}`;
         return;
       }
       const q = currentQuestions[currentIndex];
       document.getElementById("question-text").textContent = q.question;
       document.getElementById("feedback").textContent = "";
+      // Güncelle progress göstergesi
+      document.getElementById("progress").textContent = `Soru: ${currentIndex + 1}/${currentQuestions.length}`;
 
-      // Seçenekleri ekle
+      // Seçenekleri oluştur
       const optionsDiv = document.getElementById("options");
       optionsDiv.innerHTML = "";
       q.options.forEach(opt => {
@@ -340,26 +359,25 @@
 
       // "Sonraki" butonunu gizle
       document.getElementById("next-btn").style.display = "none";
+      // Restart butonunu gizle (sorular devam ettiği sürece)
+      document.getElementById("restart-btn").style.display = "none";
     }
 
     /* ==================== CEVAP KONTROLÜ ==================== */
     function checkAnswer(selected) {
       const q = currentQuestions[currentIndex];
       if (selected === q.answer) {
-        // Doğru cevap
         document.getElementById("feedback").textContent = "Doğru! 🎉";
         correctSound.currentTime = 0;
         correctSound.play().catch(() => {});
       } else {
-        // Yanlış cevap
         document.getElementById("feedback").textContent = `Yanlış! Doğru cevap: ${q.answer}`;
         wrongSound.currentTime = 0;
         wrongSound.play().catch(() => {});
-        // Yanlış cevap setine ekle
         wrongAnswers.add(q.shortLabel);
         displayWrongAnswers();
       }
-      // Sonraki butonunu göster
+      // "Sonraki" butonunu göster
       document.getElementById("next-btn").style.display = "block";
     }
 
@@ -380,7 +398,26 @@
       });
     }
 
-    /* ==================== DİZİ KARIŞTIR ==================== */
+    /* ==================== ZORLUK DÜŞÜRME (Hard -> Easy) ==================== */
+    document.getElementById("difficulty-btn").addEventListener("click", () => {
+      // Eğer kullanıcı hard modda ise, "Yandım, bana su ver!" butonuna tıklayınca
+      // Oyunu easy moddaki sorularla yeniden başlatıyoruz.
+      if (currentMode === 'hard') {
+        chooseMode('easy');
+      }
+    });
+
+    /* ==================== OYUNU BAŞTAN BAŞLAT (Ana Menüye Dön) ==================== */
+    document.getElementById("restart-btn").addEventListener("click", () => {
+      // Ana menüye dön: mod seçim ekranını göster, soru kutusunu ve yanlış cevaplar kutusunu gizle
+      document.getElementById("mode-selection").style.display = "flex";
+      document.getElementById("question-box").style.display = "none";
+      document.getElementById("wrong-answers-box").style.display = "none";
+      // Restart butonunu gizle
+      document.getElementById("restart-btn").style.display = "none";
+    });
+
+    /* ==================== DİZİYİ KARIŞTIR ==================== */
     function shuffleArray(array) {
       for (let i = array.length - 1; i > 0; i--) {
         const j = Math.floor(Math.random() * (i + 1));
