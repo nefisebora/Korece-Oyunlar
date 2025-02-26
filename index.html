@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Korece Sayı Oyunu</title>
+
+  <!-- 8-bit font -->
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+
+  <style>
+    * {
+      box-sizing: border-box;
+      text-align: center;
+    }
+    body {
+      margin: 0;
+      padding: 0;
+      background: #ffe6f2;
+      font-family: 'Press Start 2P', cursive;
+      color: #ff320d;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      min-height: 100vh;
+    }
+    .header {
+      text-shadow: 1px 1px 2px #140f0f;
+      margin-top: 30px;
+      margin-bottom: 20px;
+    }
+    .header h1 {
+      font-size: 32px;
+      margin: 0;
+    }
+    /* Konteyner */
+    .container {
+      max-width: 700px;
+      width: 100%;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    /* Mod Seçimi */
+    .mode-selection {
+      display: flex;
+      justify-content: center;
+      gap: 40px;
+      position: relative;
+      margin-top: 20px;
+      margin-bottom: 40px;
+    }
+    .mode-selection button {
+      padding: 10px 20px;
+      border: 3px solid #140f0f;
+      border-radius: 5px;
+      font-size: 14px;
+      cursor: pointer;
+      background: #ffd4dc;
+      color: #ff320d;
+      text-shadow: 1px 1px 2px #140f0f;
+      box-shadow: 3px 3px 0px #140f0f;
+      position: relative;
+    }
+    .mode-selection button:hover {
+      background: #ffc0cb;
+    }
+    .indicator {
+      position: absolute;
+      top: 100%;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 24px;
+      color: #ff320d;
+      font-family: 'Press Start 2P', cursive;
+      margin-top: 5px;
+      opacity: 0;
+    }
+    /* Soru Kutusu */
+    .question-box {
+      display: none;
+      background: #ffd4dc;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 4px 4px 0px #140f0f;
+      width: 100%;
+      max-width: 600px;
+      margin-bottom: 20px;
+    }
+    /* Progress Gösterge */
+    #progress {
+      font-size: 14px;
+      margin-bottom: 10px;
+      text-shadow: 1px 1px 2px #140f0f;
+    }
+    .question-box h3 {
+      margin-top: 0;
+      font-size: 16px;
+      text-shadow: 1px 1px 2px #140f0f;
+    }
+    .options {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 10px;
+      margin-top: 15px;
+    }
+    .option-btn {
+      background: #ffe6f2;
+      color: #ff320d;
+      text-shadow: 1px 1px 2px #140f0f;
+      padding: 10px 20px;
+      border: 2px solid #ff69b4;
+      border-radius: 5px;
+      cursor: pointer;
+      box-shadow: 3px 3px 0px #140f0f;
+      font-size: 14px;
+    }
+    .option-btn:hover {
+      background: #ffc0cb;
+      color: #fff;
+    }
+    .feedback {
+      margin-top: 15px;
+      font-size: 14px;
+      min-height: 20px;
+      text-shadow: 1px 1px 2px #140f0f;
+    }
+    .next-btn, .restart-btn {
+      display: none;
+      margin: 15px auto 0 auto;
+      padding: 10px 20px;
+      background: #ffe6f2;
+      border: 3px solid #140f0f;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 14px;
+      color: #ff320d;
+      text-shadow: 1px 1px 2px #140f0f;
+      box-shadow: 3px 3px 0px #140f0f;
+    }
+    .next-btn:hover, .restart-btn:hover {
+      background: #ffc0cb;
+      color: #fff;
+    }
+    /* Zorluk Düşürme Butonu */
+    .difficulty-btn {
+      display: none;
+      margin: 20px 0;
+      padding: 10px 20px;
+      background: #ffe6f2;
+      border: 3px solid #140f0f;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 14px;
+      color: #ff320d;
+      text-shadow: 1px 1px 2px #140f0f;
+      box-shadow: 3px 3px 0px #140f0f;
+    }
+    .difficulty-btn:hover {
+      background: #ffc0cb;
+      color: #fff;
+    }
+    /* Yanlış Cevaplar Kutusu */
+    .wrong-answers-box {
+      width: 100%;
+      max-width: 600px;
+      background: #ffd4dc;
+      padding: 15px;
+      border-radius: 10px;
+      box-shadow: 4px 4px 0px #140f0f;
+      margin-top: 20px;
+      display: none;
+    }
+    .wrong-answers-box h2 {
+      margin: 0;
+      font-size: 16px;
+      text-shadow: 1px 1px 2px #140f0f;
+      margin-bottom: 10px;
+    }
+    #wrong-answers {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+    #wrong-answers li {
+      margin-bottom: 5px;
+      font-size: 14px;
+      text-shadow: 1px 1px 2px #140f0f;
+    }
+    /* Vurgulama stil */
+    .highlight {
+      background: #ffc0cb;
+      color: #fff;
+      padding: 3px 5px;
+      border-radius: 5px;
+      display: inline-block;
+    }
+  </style>
+</head>
+<body>
+  <!-- Başlık -->
+  <div class="header">
+    <h1 id="game-title">KORECE SAYI OYUNU</h1>
+  </div>
+
+  <!-- Ana Kapsayıcı -->
+  <div class="container">
+    <!-- Mod Seçimi -->
+    <div class="mode-selection" id="mode-selection">
+      <button onclick="chooseMode('easy')">
+        🍙 Basitten Başla Kimbap Ye!
+        <span class="indicator">🌸</span>
+      </button>
+      <button onclick="chooseMode('hard')">
+        🌶️ Zoru Seç Goçucang Ye!
+        <span class="indicator">🌸</span>
+      </button>
+    </div>
+
+    <!-- Soru Kutusu -->
+    <div class="question-box" id="question-box">
+      <div id="progress"></div>
+      <h3 id="question-text">Soru Metni</h3>
+      <div class="options" id="options"></div>
+      <div class="feedback" id="feedback"></div>
+      <button class="next-btn" id="next-btn">Sonraki</button>
+      <button class="restart-btn" id="restart-btn">Karnım Doymadı!</button>
+    </div>
+
+    <!-- Zorluk Düşürme Butonu (sadece hard modda) -->
+    <button class="difficulty-btn" id="difficulty-btn">Yandım, bana su ver! 💧</button>
+
+    <!-- Yanlış Cevaplar Kutusu -->
+    <div class="wrong-answers-box" id="wrong-answers-box">
+      <h2>Yanlışlarını Düzelt</h2>
+      <ul id="wrong-answers"></ul>
+    </div>
+  </div>
+
+  <script>
+    /* ==================== SES DOSYALARI ==================== */
+    const clickSound = new Audio('click.mp3');
+    const correctSound = new Audio('correct.mp3');
+    const wrongSound = new Audio('wrong.mp3');
+
+    /* ==================== GÖRSEL ANİMASYON (Çiçek Emojisi) ==================== */
+    function cycleIndicator() {
+      const indicators = document.querySelectorAll('.indicator');
+      let index = 0;
+      setInterval(() => {
+        indicators.forEach((ind, i) => {
+          ind.style.opacity = i === index ? '1' : '0';
+        });
+        index = (index + 1) % indicators.length;
+      }, 1000);
+    }
+    cycleIndicator();
+
+    /* ==================== 20 SORULUK KOLAY VE ZOR LİSTELER ==================== */
+    const easyQuestions = [
+      // 20 soru ekleyin. Örnek 10 soru:
+      { question: "Korece '일' hangi sayıdır?", shortLabel: "일 = 1", options: ["1", "2", "3", "4"], answer: "1" },
+      { question: "Korece '이' hangi sayıdır?", shortLabel: "이 = 2", options: ["2", "3", "4", "5"], answer: "2" },
+      { question: "Korece '삼' hangi sayıdır?", shortLabel: "삼 = 3", options: ["3", "4", "5", "6"], answer: "3" },
+      { question: "Korece '사' hangi sayıdır?", shortLabel: "사 = 4", options: ["4", "5", "6", "7"], answer: "4" },
+      { question: "Korece '오' hangi sayıdır?", shortLabel: "오 = 5", options: ["5", "6", "7", "8"], answer: "5" },
+      { question: "Korece '육' hangi sayıdır?", shortLabel: "육 = 6", options: ["6", "7", "8", "9"], answer: "6" },
+      { question: "Korece '칠' hangi sayıdır?", shortLabel: "칠 = 7", options: ["7", "8", "9", "10"], answer: "7" },
+      { question: "Korece '팔' hangi sayıdır?", shortLabel: "팔 = 8", options: ["8", "9", "10", "11"], answer: "8" },
+      { question: "Korece '구' hangi sayıdır?", shortLabel: "구 = 9", options: ["9", "10", "11", "12"], answer: "9" },
+      { question: "Korece '십' hangi sayıdır?", shortLabel: "십 = 10", options: ["10", "11", "12", "13"], answer: "10" }
+      // ... 10 tane daha ekle
+    ];
+
+    const hardQuestions = [
+      // 20 soru ekleyin. Örnek 10 soru:
+      { question: "Korece '백' hangi sayıdır?", shortLabel: "백 = 100", options: ["100", "200", "300", "400"], answer: "100" },
+      { question: "Korece '천' hangi sayıdır?", shortLabel: "천 = 1000", options: ["500", "1000", "1500", "2000"], answer: "1000" },
+      { question: "Korece '만' hangi sayıdır?", shortLabel: "만 = 10000", options: ["10.000", "20.000", "30.000", "40.000"], answer: "10.000" },
+      { question: "Korece '십만' hangi sayıdır?", shortLabel: "십만 = 100000", options: ["50.000", "100.000", "150.000", "200.000"], answer: "100.000" },
+      { question: "Korece '백만' hangi sayıdır?", shortLabel: "백만 = 1000000", options: ["500.000", "1.000.000", "1.500.000", "2.000.000"], answer: "1.000.000" },
+      { question: "Korece '십만오십육' hangi sayıdır?", shortLabel: "십만오십육 = 100.056", options: ["100.056", "10.056", "105.006", "150.600"], answer: "100.056" },
+      { question: "Korece '이천삼백팔십사' hangi sayıdır?", shortLabel: "이천삼백팔십사 = 2.384", options: ["2.384", "2.843", "2.834", "2.348"], answer: "2.384" },
+      { question: "Korece '백십이' hangi sayıdır?", shortLabel: "백십이 = 112", options: ["110", "111", "112", "113"], answer: "112" },
+      { question: "Korece '십이만삼천사백구' hangi sayıdır?", shortLabel: "십이만삼천사백구 = 123.409", options: ["123.409", "120.349", "12.349", "1.234.009"], answer: "123.409" },
+      { question: "Korece '삼천오백구십' hangi sayıdır?", shortLabel: "삼천오백구십 = 3.590", options: ["3.590", "3.509", "3.900", "5.390"], answer: "3.590" }
+      // ... 10 tane daha ekle
+    ];
+
+    /* ==================== DEĞİŞKENLER ==================== */
+    let currentQuestions = [];
+    let currentIndex = 0;
+    let wrongAnswers = new Set();
+    let currentMode = null; // 'easy' veya 'hard'
+
+    /* ==================== HER TIKLAMADA CLICK SESİ ==================== */
+    document.addEventListener('click', () => {
+      clickSound.currentTime = 0;
+      clickSound.play().catch(() => {});
+    }, true);
+
+    /* ==================== MOD SEÇİMİ (OYUN BAŞLANGICI) ==================== */
+    function chooseMode(mode) {
+      currentMode = mode;
+      currentQuestions = (mode === 'easy') ? [...easyQuestions] : [...hardQuestions];
+      shuffleArray(currentQuestions);
+      // Mod seçim ekranını gizle
+      document.getElementById("mode-selection").style.display = "none";
+      // Soru kutusunu göster
+      document.getElementById("question-box").style.display = "block";
+      // Yanlış cevaplar kutusunu sıfırla ve göster
+      wrongAnswers.clear();
+      displayWrongAnswers();
+      document.getElementById("wrong-answers-box").style.display = "block";
+      // Eğer hard moddaysa, zorluk düşürme butonunu göster; yoksa gizle
+      if (mode === 'hard') {
+        document.getElementById("difficulty-btn").style.display = "block";
+      } else {
+        document.getElementById("difficulty-btn").style.display = "none";
+      }
+      // İlk soruyu yükle
+      currentIndex = 0;
+      loadQuestion();
+    }
+
+    /* ==================== SORU YÜKLEME ==================== */
+    function loadQuestion() {
+      // Eğer tüm sorular bitti ise
+      if (currentIndex >= currentQuestions.length) {
+        document.getElementById("question-text").textContent = "Tebrikler, sorular bitti!";
+        document.getElementById("options").innerHTML = "";
+        document.getElementById("feedback").textContent = "";
+        document.getElementById("next-btn").style.display = "none";
+        // Göster "Karnım Doymadı!" butonunu
+        document.getElementById("restart-btn").style.display = "block";
+        // Ayrıca progress göstergesini de güncelle
+        document.getElementById("progress").textContent = `Soru: ${currentQuestions.length}/${currentQuestions.length}`;
+        return;
+      }
+      const q = currentQuestions[currentIndex];
+      document.getElementById("question-text").textContent = q.question;
+      document.getElementById("feedback").textContent = "";
+      // Güncelle progress göstergesi
+      document.getElementById("progress").textContent = `Soru: ${currentIndex + 1}/${currentQuestions.length}`;
+
+      // Seçenekleri oluştur
+      const optionsDiv = document.getElementById("options");
+      optionsDiv.innerHTML = "";
+      q.options.forEach(opt => {
+        let btn = document.createElement("button");
+        btn.className = "option-btn";
+        btn.textContent = opt;
+        btn.addEventListener("click", () => checkAnswer(opt));
+        optionsDiv.appendChild(btn);
+      });
+
+      // "Sonraki" butonunu gizle
+      document.getElementById("next-btn").style.display = "none";
+      // Restart butonunu gizle (sorular devam ettiği sürece)
+      document.getElementById("restart-btn").style.display = "none";
+    }
+
+    /* ==================== CEVAP KONTROLÜ ==================== */
+    function checkAnswer(selected) {
+      const q = currentQuestions[currentIndex];
+      if (selected === q.answer) {
+        document.getElementById("feedback").textContent = "Doğru! 🎉";
+        correctSound.currentTime = 0;
+        correctSound.play().catch(() => {});
+      } else {
+        document.getElementById("feedback").textContent = `Yanlış! Doğru cevap: ${q.answer}`;
+        wrongSound.currentTime = 0;
+        wrongSound.play().catch(() => {});
+        wrongAnswers.add(q.shortLabel);
+        displayWrongAnswers();
+      }
+      // "Sonraki" butonunu göster
+      document.getElementById("next-btn").style.display = "block";
+    }
+
+    /* ==================== SONRAKİ SORU ==================== */
+    document.getElementById("next-btn").addEventListener("click", () => {
+      currentIndex++;
+      loadQuestion();
+    });
+
+    /* ==================== YANLIŞ CEVAPLARI GÖSTER ==================== */
+    function displayWrongAnswers() {
+      const wrongList = document.getElementById("wrong-answers");
+      wrongList.innerHTML = "";
+      wrongAnswers.forEach(answer => {
+        let listItem = document.createElement("li");
+        listItem.innerHTML = `<span class="highlight">${answer}</span>`;
+        wrongList.appendChild(listItem);
+      });
+    }
+
+    /* ==================== ZORLUK DÜŞÜRME (Hard -> Easy) ==================== */
+    document.getElementById("difficulty-btn").addEventListener("click", () => {
+      // Eğer kullanıcı hard modda ise, "Yandım, bana su ver!" butonuna tıklayınca
+      // Oyunu easy moddaki sorularla yeniden başlatıyoruz.
+      if (currentMode === 'hard') {
+        chooseMode('easy');
+      }
+    });
+
+    /* ==================== OYUNU BAŞTAN BAŞLAT (Ana Menüye Dön) ==================== */
+    document.getElementById("restart-btn").addEventListener("click", () => {
+      // Ana menüye dön: mod seçim ekranını göster, soru kutusunu ve yanlış cevaplar kutusunu gizle
+      document.getElementById("mode-selection").style.display = "flex";
+      document.getElementById("question-box").style.display = "none";
+      document.getElementById("wrong-answers-box").style.display = "none";
+      // Restart butonunu gizle
+      document.getElementById("restart-btn").style.display = "none";
+    });
+
+    /* ==================== DİZİYİ KARIŞTIR ==================== */
+    function shuffleArray(array) {
+      for (let i = array.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [array[i], array[j]] = [array[j], array[i]];
+      }
+      return array;
+    }
+  </script>
+</body>
+</html>
