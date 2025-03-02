@@ -80,9 +80,91 @@
       font-weight: bold;
       margin: 10px;
     }
+    /* Eşleştirme oyunu için özel düzen */
+    .animal-row, .word-row {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 15px;
+      margin: 10px 0;
+    }
+    .match-animal {
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      background-color: #fff;
+      font-size: 32px;
+      border: 2px solid #ffb6c1;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      cursor: pointer;
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    .match-animal.selected {
+      box-shadow: 0 0 10px #ff8da1;
+    }
+    .match-word {
+      width: 120px;
+      height: 80px;
+      border: 2px solid #ffb6c1;
+      border-radius: 10px;
+      background-color: #fff1f3;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      cursor: pointer;
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    .match-word .word-text {
+      font-size: 20px;
+      font-weight: 600;
+    }
+    .matched-emoji {
+      font-size: 28px;
+      opacity: 0.6;
+    }
+    .connection-line {
+      width: 80%;
+      height: 4px;
+      background-color: #ff8da1;
+      margin: 5px auto;
+      border-radius: 2px;
+    }
+    .instructions {
+      font-size: 16px;
+      color: #555;
+      margin-bottom: 10px;
+    }
     /* Sonuç ekranı */
     #result-screen {
       display: none;
+    }
+    /* Reklam kutusu */
+    .ad-container {
+      margin: 20px auto;
+      padding: 20px;
+      max-width: 90%;
+      background-color: #fff;
+      border: 3px solid #ffb6c1;
+      border-radius: 15px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+      animation: pulse 2s infinite;
+    }
+    .ad-container h1 {
+      font-size: 26px;
+      margin: 0 0 10px;
+      color: #d63384;
+    }
+    .ad-container p {
+      font-size: 18px;
+      font-weight: 600;
+    }
+    @keyframes pulse {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.05); }
+      100% { transform: scale(1); }
     }
   </style>
 </head>
@@ -120,6 +202,7 @@
   <!-- Test Aşaması -->
   <div id="test-phase" style="display: none;">
     <h2 id="test-title"></h2>
+    <p id="test-instructions" class="instructions"></p>
     <div id="timer">00:00</div>
     <div class="game-container" id="test-container"></div>
     <div class="button-container">
@@ -132,12 +215,11 @@
   <div id="result-screen">
     <h2>Tebrikler! 🎉👏</h2>
     <p>Testi <span id="elapsed-time"></span> sürede tamamladın.</p>
-    <p style="font-size:18px; font-weight:600;">
-      Korece öğrenmeye hevesli gibisin,
-      <a href="https://www.derslerim.net/korece-egitim-seti" target="_blank" style="color:#d63384; text-decoration:none;">
-        benimle birlikte korece öğrenmek için tıkla!
-      </a>
-    </p>
+    <!-- Reklam Yönlendirme -->
+    <div class="ad-container">
+      <h1>Korece Öğrenmeye Hevesli misin?</h1>
+      <p><a href="https://www.derslerim.net/korece-egitim-seti" target="_blank" style="color:#d63384; text-decoration:none;">Benimle birlikte korece öğrenmek için tıkla!</a></p>
+    </div>
     <div class="button-container">
       <button onclick="playClick(); restartTest();">Yeniden Başla</button>
       <button onclick="playClick(); returnToLearning();">Kelime Öğrenmeye Dön</button>
@@ -147,13 +229,11 @@
   <script>
     /* --- Ses Dosyaları ve Fonksiyonlar --- */
     const clickSound = new Audio('click.mp3');
-    clickSound.volume = 0.2;  // Click sesi alt düzeye çekildi
+    clickSound.volume = 0.2;
     const correctSound = new Audio('correct.mp3');
     const wrongSound = new Audio('wrong.mp3');
-    // Opsiyonel: Bitiş ekranında çalmak için score.mp3
-    // const scoreSound = new Audio('score.mp3');
+    const scoreSound = new Audio('score.mp3');
 
-    // Fonksiyonlar (Global Scope)
     function playClick() {
       clickSound.currentTime = 0;
       clickSound.play();
@@ -167,7 +247,7 @@
       wrongSound.play();
     }
 
-    // Hayvanlar listesi (20 adet)
+    /* --- Hayvanlar Listesi --- */
     const animals = [
       { emoji: "🐶", name: "강아지" },
       { emoji: "🐱", name: "고양이" },
@@ -226,7 +306,7 @@
       const container = document.getElementById("learning-container");
       container.innerHTML = "";
       let pageItems = animals.slice(currentPage * itemsPerPage, (currentPage + 1) * itemsPerPage);
-      shuffle(pageItems); // İsteğe bağlı
+      shuffle(pageItems);
       pageItems.forEach(animal => {
         let div = document.createElement("div");
         div.classList.add("animal");
@@ -284,6 +364,11 @@
       currentTestPage = 0;
       document.getElementById("test-title").innerText =
         (type === "matching") ? "Eşleştirme Alıştırması" : "Sürükle Bırak Alıştırması";
+      // Kısa yönerge ekleyelim
+      document.getElementById("test-instructions").innerText =
+        (type === "matching") ?
+          "Yukarıdaki hayvan emojisini seçin ve altındaki doğru Korece kelimeye tıklayın." :
+          "Hayvan emojisini doğru Korece kelime üzerine sürükleyin.";
       startTestPhase();
     }
 
@@ -317,13 +402,22 @@
       }
     }
 
-    // Eşleştirme Testi
+    /* --- Eşleştirme Testi (Yeni Düzen) --- */
     function displayMatchingTestPage(pageItems, container) {
       selectedAnimal = null;
-      const animalDiv = document.createElement("div");
-      animalDiv.className = "game-container";
-      const wordDiv = document.createElement("div");
-      wordDiv.className = "game-container";
+      container.innerHTML = "";
+
+      // Talimat
+      let instr = document.createElement("p");
+      instr.className = "instructions";
+      instr.innerText = "Eşleştirme: Yukarıdaki hayvan emojisini seçin, altındaki doğru Korece kelimeye tıklayın.";
+      container.appendChild(instr);
+
+      // İki satır: Üstte hayvanlar, altta kelimeler
+      const animalRow = document.createElement("div");
+      animalRow.className = "animal-row";
+      const wordRow = document.createElement("div");
+      wordRow.className = "word-row";
 
       let animalItems = pageItems.slice();
       let wordItems = pageItems.slice();
@@ -332,35 +426,40 @@
 
       animalItems.forEach(item => {
         let div = document.createElement("div");
-        div.className = "animal";
+        div.className = "match-animal";
         div.innerHTML = item.emoji;
         div.onclick = function() {
           playClick();
-          if (div.classList.contains("matched")) return;
-          if (selectedAnimal) {
-            document.querySelectorAll(".animal").forEach(el => el.classList.remove("selected"));
-            selectedAnimal = null;
-          }
+          if(div.classList.contains("matched")) return;
+          document.querySelectorAll(".match-animal").forEach(el => el.classList.remove("selected"));
           div.classList.add("selected");
-          selectedAnimal = { element: div, name: item.name };
+          selectedAnimal = { element: div, name: item.name, emoji: item.emoji };
         };
-        animalDiv.appendChild(div);
+        animalRow.appendChild(div);
       });
 
       wordItems.forEach(item => {
         let div = document.createElement("div");
-        div.className = "word";
-        div.innerHTML = item.name;
+        div.className = "match-word";
+        div.innerHTML = `<span class="word-text">${item.name}</span>`;
         div.onclick = function() {
           playClick();
-          if (!selectedAnimal) return;
-          if (item.name === selectedAnimal.name) {
+          if(div.classList.contains("matched") || !selectedAnimal) return;
+          if(item.name === selectedAnimal.name) {
             playCorrect();
-            selectedAnimal.element.classList.add("matched");
+            // Doğru eşleşme: ilgili kelimenin üstünde hayvan emojisi, araya parlak çizgi ekle
+            div.innerHTML = `<div class="matched-emoji">${selectedAnimal.emoji}</div><div class="connection-line"></div><span class="word-text">${item.name}</span>`;
             div.classList.add("matched");
+            selectedAnimal.element.classList.add("matched");
+            // Silikleşme ve etkileşimi kapatma
+            selectedAnimal.element.style.opacity = "0.3";
+            selectedAnimal.element.style.pointerEvents = "none";
+            div.style.opacity = "0.3";
+            div.style.pointerEvents = "none";
             selectedAnimal = null;
-            // Tüm eşleşmeler tamam mı?
-            if (document.querySelectorAll(".matched").length === pageItems.length * 2) {
+            // Tüm çiftler eşleştiyse otomatik sonraki sayfaya geç
+            if(document.querySelectorAll(".match-animal.matched").length === pageItems.length &&
+               document.querySelectorAll(".match-word.matched").length === pageItems.length) {
               setTimeout(() => {
                 if ((currentTestPage + 1) * itemsPerPage < testQuestions.length) {
                   currentTestPage++;
@@ -369,23 +468,29 @@
                 } else {
                   endTest();
                 }
-              }, 500);
+              }, 800);
             }
           } else {
             playWrong();
-            document.querySelectorAll(".animal").forEach(el => el.classList.remove("selected"));
+            document.querySelectorAll(".match-animal").forEach(el => el.classList.remove("selected"));
             selectedAnimal = null;
           }
         };
-        wordDiv.appendChild(div);
+        wordRow.appendChild(div);
       });
 
-      container.appendChild(animalDiv);
-      container.appendChild(wordDiv);
+      container.appendChild(animalRow);
+      container.appendChild(wordRow);
     }
 
-    // Sürükle Bırak Testi
+    /* --- Sürükle Bırak Testi --- */
     function displayDragDropTestPage(pageItems, container) {
+      // Talimat ekleyelim
+      let instr = document.createElement("p");
+      instr.className = "instructions";
+      instr.innerText = "Sürükle Bırak: Hayvan emojisini doğru Korece kelime üzerine sürükleyin.";
+      container.appendChild(instr);
+
       const dragContainer = document.createElement("div");
       dragContainer.className = "game-container";
       const dropContainer = document.createElement("div");
@@ -420,17 +525,19 @@
         div.addEventListener("drop", function(e) {
           e.preventDefault();
           let draggedName = e.dataTransfer.getData("text/plain");
-          if (draggedName === div.dataset.name) {
+          if(draggedName === div.dataset.name) {
             playCorrect();
             div.classList.add("matched");
             document.querySelectorAll(".draggable").forEach(d => {
-              if (d.dataset.name === draggedName) {
+              if(d.dataset.name === draggedName) {
                 d.classList.add("matched");
+                d.style.opacity = "0.3";
+                d.style.pointerEvents = "none";
               }
             });
-            if (document.querySelectorAll(".matched").length >= pageItems.length * 2) {
+            if(document.querySelectorAll(".matched").length >= pageItems.length * 2) {
               setTimeout(() => {
-                if ((currentTestPage + 1) * itemsPerPage < testQuestions.length) {
+                if((currentTestPage + 1) * itemsPerPage < testQuestions.length) {
                   currentTestPage++;
                   displayTestPage();
                   updateTestButtons();
@@ -451,7 +558,7 @@
     }
 
     function prevTestPage() {
-      if (currentTestPage > 0) {
+      if(currentTestPage > 0) {
         currentTestPage--;
         displayTestPage();
         updateTestButtons();
@@ -459,7 +566,7 @@
     }
 
     function nextTestPage() {
-      if ((currentTestPage + 1) * itemsPerPage < testQuestions.length) {
+      if((currentTestPage + 1) * itemsPerPage < testQuestions.length) {
         currentTestPage++;
         displayTestPage();
         updateTestButtons();
@@ -479,10 +586,8 @@
       clearInterval(timerInterval);
       document.getElementById("test-phase").style.display = "none";
       document.getElementById("result-screen").style.display = "block";
-      // Opsiyonel: bitişte score.mp3 çalmak isterseniz
-      // scoreSound.currentTime = 0;
-      // scoreSound.play();
-
+      scoreSound.currentTime = 0;
+      scoreSound.play();
       const now = new Date();
       let elapsed = Math.floor((now - testStartTime) / 1000);
       let minutes = String(Math.floor(elapsed / 60)).padStart(2, '0');
