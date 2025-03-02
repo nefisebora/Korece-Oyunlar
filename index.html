@@ -27,8 +27,8 @@
       gap: 20px;
       max-width: 800px;
     }
-    /* Genel kutu stili */
-    .animal, .word, .draggable, .droppable {
+    /* Genel kutu stili (öğrenme ve eşleştirme için) */
+    .animal, .word {
       width: 22%;
       max-width: 140px;
       height: 140px;
@@ -37,7 +37,7 @@
       border: 2px solid #ffb6c1;
       background-color: #fff1f3;
       border-radius: 20px;
-      box-shadow: 3px 3px 10px rgba(0, 0, 0, 0.1);
+      box-shadow: 3px 3px 10px rgba(0,0,0,0.1);
       display: flex;
       justify-content: center;
       align-items: center;
@@ -48,9 +48,9 @@
       text-align: center;
       user-select: none;
     }
-    .animal:hover, .word:hover, .draggable:hover, .droppable:hover {
+    .animal:hover, .word:hover {
       transform: scale(1.05);
-      box-shadow: 5px 5px 15px rgba(0, 0, 0, 0.2);
+      box-shadow: 5px 5px 15px rgba(0,0,0,0.2);
     }
     .button-container, .test-button-container, .test-option-container {
       display: flex;
@@ -82,13 +82,12 @@
       font-weight: bold;
       margin: 10px auto;
     }
-    /* Test yönergesi: Zamanlayıcının altında görünsün */
     #test-instructions {
       font-size: 16px;
       color: #555;
       margin-bottom: 10px;
     }
-    /* Eşleştirme oyunu düzeni: Üstte hayvan emojileri, altta Korece kelimeler */
+    /* Eşleştirme oyunu düzeni: Üstte hayvan emojileri, altta Korece kelimeler (ortalanmış) */
     .animal-row, .word-row {
       display: flex;
       justify-content: center;
@@ -140,11 +139,62 @@
       margin: 5px auto;
       border-radius: 2px;
     }
+    /* Sürükle bırak alıştırması için özel düzen */
+    .drag-container {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 20px;
+    }
+    /* Draggable kutucukları yarı boyutta */
+    .draggable-small {
+      width: 70px;
+      height: 70px;
+      font-size: 32px;
+      border: 2px solid #ffb6c1;
+      background-color: #fff1f3;
+      border-radius: 50%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      cursor: pointer;
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    .draggable-small:hover {
+      transform: scale(1.05);
+      box-shadow: 0 0 10px rgba(0,0,0,0.2);
+    }
+    /* Drop container: sabit boyut, relative */
+    .drop-container {
+      position: relative;
+      width: 80%;
+      max-width: 600px;
+      height: 300px;
+      margin: 0 auto;
+      border: 1px dashed #ccc;
+    }
+    /* Drop kutuları: sadece kelime içerecek, dinamik boyut */
+    .drop-word {
+      position: absolute;
+      padding: 5px 10px;
+      border: 2px solid #ffb6c1;
+      border-radius: 10px;
+      background-color: #fff1f3;
+      font-size: 20px;
+      font-weight: 600;
+      white-space: nowrap;
+      cursor: pointer;
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    .drop-word:hover {
+      transform: scale(1.05);
+      box-shadow: 0 0 10px rgba(0,0,0,0.2);
+    }
     /* Sonuç ekranı */
     #result-screen {
       display: none;
     }
-    /* Reklam kutusu: Sonuç ekranında alt kısımda pulsating efekt */
+    /* Reklam kutusu (sonuç ekranındaki pulsating reklam) */
     .ad-container {
       margin: 20px auto;
       padding: 20px;
@@ -168,6 +218,19 @@
       0% { transform: scale(1); }
       50% { transform: scale(1.05); }
       100% { transform: scale(1); }
+    }
+    /* Küçük reklam kutusu: Tüm sayfaların altında (sonuç hariç) */
+    #small-ad {
+      display: block;
+      font-size: 14px;
+      color: #d63384;
+      background-color: #fff;
+      border: 1px solid #ffb6c1;
+      border-radius: 10px;
+      padding: 8px;
+      margin: 20px auto 0;
+      max-width: 90%;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.2);
     }
   </style>
 </head>
@@ -218,7 +281,6 @@
   <div id="result-screen">
     <h2>Tebrikler! 🎉👏</h2>
     <p>Testi <span id="elapsed-time"></span> sürede tamamladın.</p>
-    <!-- Reklam Yönlendirme -->
     <div class="ad-container">
       <h1>Korece Öğrenmeye Hevesli misin?</h1>
       <p><a href="https://www.derslerim.net/korece-egitim-seti" target="_blank" style="color:#d63384; text-decoration:none;">Benimle birlikte korece öğrenmek için tıkla!</a></p>
@@ -227,6 +289,11 @@
       <button onclick="playClick(); restartTest();">Yeniden Başla</button>
       <button onclick="playClick(); returnToLearning();">Kelime Öğrenmeye Dön</button>
     </div>
+  </div>
+
+  <!-- Küçük Reklam (Sonuç ekranı hariç tüm sayfalarda görünsün) -->
+  <div id="small-ad">
+    <p>Ücretsiz Korece Dersleri İçin: <a href="https://www.derslerim.net/korece-egitim-seti" target="_blank" style="color:#d63384; text-decoration:none;">Detaylı Bilgi İçin Tıklayın!</a></p>
   </div>
 
   <script>
@@ -248,6 +315,14 @@
     function playWrong() {
       wrongSound.currentTime = 0;
       wrongSound.play();
+    }
+
+    /* --- Fonksiyonlar: Küçük Reklamın Gösterimi --- */
+    function showSmallAd() {
+      document.getElementById("small-ad").style.display = "block";
+    }
+    function hideSmallAd() {
+      document.getElementById("small-ad").style.display = "none";
     }
 
     /* --- Hayvanlar Listesi (20 adet) --- */
@@ -300,6 +375,7 @@
       document.getElementById("test-option").style.display = "none";
       document.getElementById("test-phase").style.display = "none";
       document.getElementById("result-screen").style.display = "none";
+      showSmallAd();
       currentPage = 0;
       displayPage();
       updateLearnButtons();
@@ -358,6 +434,7 @@
     function startTestOption() {
       document.getElementById("learning-phase").style.display = "none";
       document.getElementById("test-option").style.display = "block";
+      showSmallAd();
     }
 
     function selectTestType(type) {
@@ -367,11 +444,10 @@
       currentTestPage = 0;
       document.getElementById("test-title").innerText =
         (type === "matching") ? "Eşleştirme Alıştırması" : "Sürükle Bırak Alıştırması";
-      // Test yönergesini test-instructions alanına ekleyelim
       document.getElementById("test-instructions").innerText =
         (type === "matching") ?
-          "Üstteki hayvan emojilerini seçin, alt kısımdaki doğru Korece kelimelerle eşleştirin." :
-          "Üstteki hayvan emojilerini sürükleyip, alt kısımdaki doğru Korece kelimelerin üzerine bırakın.";
+          "Üstteki hayvan emojilerini seçin, altındaki doğru Korece kelimelerle eşleştirin." :
+          "Üstteki hayvan emojilerini sürükleyip, altındaki doğru Korece kelimelerin üzerine bırakın.";
       startTestPhase();
     }
 
@@ -380,6 +456,7 @@
       document.getElementById("test-option").style.display = "none";
       document.getElementById("test-phase").style.display = "block";
       document.getElementById("result-screen").style.display = "none";
+      showSmallAd();
       testStartTime = new Date();
       timerInterval = setInterval(updateTimer, 1000);
       displayTestPage();
@@ -410,7 +487,7 @@
       selectedAnimal = null;
       container.innerHTML = "";
 
-      // İki satır: Üstte hayvan emojileri, altta Korece kelimeler
+      // Üstte hayvan emojileri, altta Korece kelimeler (ortalanmış)
       const animalRow = document.createElement("div");
       animalRow.className = "animal-row";
       const wordRow = document.createElement("div");
@@ -444,11 +521,11 @@
           if(div.classList.contains("matched") || !selectedAnimal) return;
           if(item.name === selectedAnimal.name) {
             playCorrect();
-            // Doğru eşleşme: hayvan emojisi, araya çizgi ekleyerek ilgili kelimenin üstünde belirsin
+            // Doğru eşleşme: ilgili kelimenin üstünde hayvan emojisi ve çizgi
             div.innerHTML = `<div class="matched-emoji">${selectedAnimal.emoji}</div><div class="connection-line"></div><span class="word-text">${item.name}</span>`;
             div.classList.add("matched");
             selectedAnimal.element.classList.add("matched");
-            // Doğru eşleşmeden sonra her iki eleman da silikleşip etkileşim kapatsın
+            // Silikleşme ve etkileşimi kapatma
             selectedAnimal.element.style.opacity = "0.3";
             selectedAnimal.element.style.pointerEvents = "none";
             div.style.opacity = "0.3";
@@ -482,21 +559,22 @@
 
     /* --- Sürükle Bırak Testi --- */
     function displayDragDropTestPage(pageItems, container) {
+      container.innerHTML = "";
       // Üstte emojiler, altta Korece kelimeler
       const dragContainer = document.createElement("div");
-      dragContainer.className = "game-container";
+      dragContainer.className = "drag-container";
       const dropContainer = document.createElement("div");
-      dropContainer.className = "game-container";
+      dropContainer.className = "drop-container";
 
       let dragItems = pageItems.slice();
       let dropItems = pageItems.slice();
       shuffle(dragItems);
       shuffle(dropItems);
 
+      // Draggable kutucukları (yarı boyut)
       dragItems.forEach(item => {
         let div = document.createElement("div");
-        div.className = "draggable";
-        div.draggable = true;
+        div.className = "draggable-small";
         div.innerHTML = item.emoji;
         div.dataset.name = item.name;
         div.addEventListener("dragstart", function(e) {
@@ -506,10 +584,20 @@
         dragContainer.appendChild(div);
       });
 
+      // Drop kutuları: Drop container içinde rastgele konumlandırma
       dropItems.forEach(item => {
         let div = document.createElement("div");
-        div.className = "droppable";
-        div.innerHTML = item.name;
+        div.className = "drop-word";
+        div.innerText = item.name;
+        // Rastgele açı ve konum hesaplaması
+        let angle = Math.random() * 2 * Math.PI;
+        let radius = 120;
+        let centerX = 600 / 2;  // drop-container genişliği 600px varsayıldı
+        let centerY = 300 / 2;  // drop-container yüksekliği 300px varsayıldı
+        let left = centerX + radius * Math.cos(angle) - 40; // 40 px offset
+        let top = centerY + radius * Math.sin(angle) - 20;  // 20 px offset
+        div.style.left = left + "px";
+        div.style.top = top + "px";
         div.dataset.name = item.name;
         div.addEventListener("dragover", function(e) {
           e.preventDefault();
@@ -520,13 +608,15 @@
           if(draggedName === div.dataset.name) {
             playCorrect();
             div.classList.add("matched");
-            document.querySelectorAll(".draggable").forEach(d => {
+            document.querySelectorAll(".draggable-small").forEach(d => {
               if(d.dataset.name === draggedName) {
                 d.classList.add("matched");
                 d.style.opacity = "0.3";
                 d.style.pointerEvents = "none";
               }
             });
+            div.style.opacity = "0.3";
+            div.style.pointerEvents = "none";
             if(document.querySelectorAll(".matched").length >= pageItems.length * 2) {
               setTimeout(() => {
                 if((currentTestPage + 1) * itemsPerPage < testQuestions.length) {
@@ -578,6 +668,7 @@
       clearInterval(timerInterval);
       document.getElementById("test-phase").style.display = "none";
       document.getElementById("result-screen").style.display = "block";
+      hideSmallAd();  // Sonuç ekranında küçük reklam gizlensin
       scoreSound.currentTime = 0;
       scoreSound.play();
       const now = new Date();
@@ -588,9 +679,9 @@
     }
 
     function restartTest() {
-      // Yeniden başla: Sonuç ekranını gizleyip test aşamasını yeniden başlatıyoruz.
       document.getElementById("result-screen").style.display = "none";
       document.getElementById("test-phase").style.display = "block";
+      showSmallAd();
       testQuestions = animals.slice();
       shuffle(testQuestions);
       currentTestPage = 0;
@@ -607,6 +698,7 @@
       document.getElementById("test-option").style.display = "none";
       document.getElementById("test-phase").style.display = "none";
       document.getElementById("result-screen").style.display = "none";
+      showSmallAd();
       startLearning();
     }
   </script>
