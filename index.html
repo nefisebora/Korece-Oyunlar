@@ -219,7 +219,7 @@
       50% { transform: scale(1.05); }
       100% { transform: scale(1); }
     }
-    /* Küçük reklam kutusu: Tüm sayfaların altında (sonuç hariç) */
+    /* Küçük reklam kutusu (sonuç hariç tüm sayfalarda) */
     #small-ad {
       display: block;
       font-size: 14px;
@@ -283,7 +283,8 @@
     <p>Testi <span id="elapsed-time"></span> sürede tamamladın.</p>
     <div class="ad-container">
       <h1>Korece Öğrenmeye Hevesli misin?</h1>
-      <p><a href="https://www.derslerim.net/korece-egitim-seti" target="_blank" style="color:#d63384; text-decoration:none;">Benimle birlikte korece öğrenmek için tıkla!</a></p>
+      <p><a href="https://www.derslerim.net/korece-egitim-seti" target="_blank" style="color:#d63384; text-decoration:none;">
+      Benimle birlikte korece öğrenmek için tıkla!</a></p>
     </div>
     <div class="button-container">
       <button onclick="playClick(); restartTest();">Yeniden Başla</button>
@@ -291,9 +292,9 @@
     </div>
   </div>
 
-  <!-- Küçük Reklam (Sonuç ekranı hariç tüm sayfalarda görünsün) -->
+  <!-- Küçük Reklam (Sonuç ekranı hariç tüm sayfalarda) -->
   <div id="small-ad">
-    <p>Ücretsiz Korece Dersleri İçin: <a href="https://www.derslerim.net/korece-egitim-seti" target="_blank" style="color:#d63384; text-decoration:none;">Detaylı Bilgi İçin Tıklayın!</a></p>
+    <p>Korece öğrenmene hız katmak ister misin? O zaman tıkla 🖱️</p>
   </div>
 
   <script>
@@ -317,7 +318,7 @@
       wrongSound.play();
     }
 
-    /* --- Fonksiyonlar: Küçük Reklamın Gösterimi --- */
+    /* --- Küçük Reklam Fonksiyonları --- */
     function showSmallAd() {
       document.getElementById("small-ad").style.display = "block";
     }
@@ -525,13 +526,13 @@
             div.innerHTML = `<div class="matched-emoji">${selectedAnimal.emoji}</div><div class="connection-line"></div><span class="word-text">${item.name}</span>`;
             div.classList.add("matched");
             selectedAnimal.element.classList.add("matched");
-            // Silikleşme ve etkileşimi kapatma
+            // Silikleşme ve etkileşim kapatma
             selectedAnimal.element.style.opacity = "0.3";
             selectedAnimal.element.style.pointerEvents = "none";
             div.style.opacity = "0.3";
             div.style.pointerEvents = "none";
             selectedAnimal = null;
-            // Tüm çiftler doğru eşleştiyse otomatik sonraki sayfaya geçiş
+            // Eğer tüm çiftler doğru eşleştiyse otomatik sonraki sayfaya geçiş
             if(document.querySelectorAll(".match-animal.matched").length === pageItems.length &&
                document.querySelectorAll(".match-word.matched").length === pageItems.length) {
               setTimeout(() => {
@@ -575,6 +576,7 @@
       dragItems.forEach(item => {
         let div = document.createElement("div");
         div.className = "draggable-small";
+        div.draggable = true;  // EKLENDİ: Draggable yapıyoruz
         div.innerHTML = item.emoji;
         div.dataset.name = item.name;
         div.addEventListener("dragstart", function(e) {
@@ -594,8 +596,8 @@
         let radius = 120;
         let centerX = 600 / 2;  // drop-container genişliği 600px varsayıldı
         let centerY = 300 / 2;  // drop-container yüksekliği 300px varsayıldı
-        let left = centerX + radius * Math.cos(angle) - 40; // 40 px offset
-        let top = centerY + radius * Math.sin(angle) - 20;  // 20 px offset
+        let left = centerX + radius * Math.cos(angle) - 40; // 40px offset
+        let top = centerY + radius * Math.sin(angle) - 20;  // 20px offset
         div.style.left = left + "px";
         div.style.top = top + "px";
         div.dataset.name = item.name;
