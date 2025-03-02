@@ -121,15 +121,25 @@
     #result-screen {
       display: none;
     }
-    /* Reklam yönlendirmesi için öne çıkan kutu */
+    /* Reklam kutusu: sonuç ekranında öne çıkarılacak */
     .ad-container {
-      margin-top: 20px;
-      padding: 15px;
+      margin: 20px auto;
+      padding: 20px;
+      max-width: 90%;
       background-color: #fff;
-      border: 2px solid #ffb6c1;
+      border: 3px solid #ffb6c1;
       border-radius: 15px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+      box-shadow: 0 4px 8px rgba(0,0,0,0.3);
       animation: pulse 2s infinite;
+    }
+    .ad-container h1 {
+      font-size: 26px;
+      margin: 0 0 10px;
+      color: #d63384;
+    }
+    .ad-container p {
+      font-size: 18px;
+      font-weight: 600;
     }
     @keyframes pulse {
       0% { transform: scale(1); }
@@ -182,10 +192,10 @@
   <div id="result-screen">
     <h2>Tebrikler! 🎉👏</h2>
     <p>Testi <span id="elapsed-time"></span> sürede tamamladın.</p>
+    <!-- Reklam Yönlendirme -->
     <div class="ad-container">
-      <p style="font-size:18px; font-weight:600;">
-        Korece öğrenmeye hevesli gibisin, <a href="https://www.derslerim.net/korece-egitim-seti" target="_blank" style="color:#d63384; text-decoration:none;">benimle birlikte korece öğrenmek için tıkla!</a>
-      </p>
+      <h1>Korece Öğrenmeye Hevesli misin?</h1>
+      <p><a href="https://www.derslerim.net/korece-egitim-seti" target="_blank" style="color:#d63384; text-decoration: none;">Benimle birlikte korece öğrenmek için tıkla!</a></p>
     </div>
     <div class="button-container">
       <button onclick="playClick(); restartTest();">Yeniden Başla</button>
@@ -196,7 +206,7 @@
   <script>
     // Ses efektleri: click sesi hafif, diğerleri normal (dosya isimleri: click.mp3, correct.mp3, wrong.mp3, score.mp3)
     const clickSound = new Audio('click.mp3');
-    clickSound.volume = 0.2; // click sesi hafif olsun
+    clickSound.volume = 0.2;
     const correctSound = new Audio('correct.mp3');
     const wrongSound = new Audio('wrong.mp3');
     const scoreSound = new Audio('score.mp3');
@@ -367,7 +377,6 @@
 
     // ---- Eşleştirme Testi: Yeni Düzen (Hayvanlar üstte, Korece altta) ----
     function displayMatchingTestPage(pageItems, container) {
-      // Sıfırla
       selectedAnimal = null;
       container.innerHTML = "";
       
@@ -410,7 +419,7 @@
             selectedAnimal.element.classList.add("matched");
             selectedAnimal.element.style.opacity = "0.3";
             selectedAnimal.element.style.pointerEvents = "none";
-            // Doğru eşleştirme yapıldıktan sonra etkileşim kapatılsın
+            // Doğru eşleşmeden sonra etkileşimi kapat
             document.querySelectorAll(".match-animal").forEach(el => el.classList.remove("selected"));
             selectedAnimal = null;
             // Tüm kelimeler eşleştiyse otomatik geçiş
@@ -424,10 +433,8 @@
                   endTest();
                 }
               }, 800);
-            }
           } else {
             playWrong();
-            // Yanlış eşleştirme: seçimi temizle
             document.querySelectorAll(".match-animal").forEach(el => el.classList.remove("selected"));
             selectedAnimal = null;
           }
@@ -436,4 +443,142 @@
       });
       
       container.appendChild(animalRow);
-      container.appendChild
+      container.appendChild(wordRow);
+    }
+
+    // ---- Sürükle Bırak Testi ----
+    function displayDragDropTestPage(pageItems, container) {
+      container.innerHTML = "";
+      // Talimat ekleyelim
+      const instr = document.createElement("p");
+      instr.className = "instructions";
+      instr.innerText = "Sürükle Bırak Testi: Hayvan emojisini doğru Korece isminin üzerine sürükleyin.";
+      container.appendChild(instr);
+      
+      // İki ayrı container: sol (draggable) ve sağ (droppable)
+      const dragContainer = document.createElement("div");
+      dragContainer.className = "game-container";
+      const dropContainer = document.createElement("div");
+      dropContainer.className = "game-container";
+
+      let dragItems = pageItems.slice();
+      let dropItems = pageItems.slice();
+      shuffle(dragItems);
+      shuffle(dropItems);
+
+      dragItems.forEach(item => {
+        let div = document.createElement("div");
+        div.className = "draggable";
+        div.draggable = true;
+        div.innerHTML = item.emoji;
+        div.dataset.name = item.name;
+        div.addEventListener("dragstart", function(e) {
+          e.dataTransfer.setData("text/plain", item.name);
+          playClick();
+        });
+        dragContainer.appendChild(div);
+      });
+
+      dropItems.forEach(item => {
+        let div = document.createElement("div");
+        div.className = "droppable";
+        div.innerHTML = item.name;
+        div.dataset.name = item.name;
+        div.addEventListener("dragover", function(e) {
+          e.preventDefault();
+        });
+        div.addEventListener("drop", function(e) {
+          e.preventDefault();
+          let draggedName = e.dataTransfer.getData("text/plain");
+          if(draggedName === div.dataset.name) {
+            playCorrect();
+            div.classList.add("matched");
+            document.querySelectorAll(".draggable").forEach(d => {
+              if(d.dataset.name === draggedName) {
+                d.classList.add("matched");
+                d.style.opacity = "0.3";
+                d.style.pointerEvents = "none";
+              }
+            });
+            if(document.querySelectorAll(".matched").length >= pageItems.length * 2) {
+              setTimeout(() => {
+                if((currentTestPage + 1) * itemsPerPage < testQuestions.length) {
+                  currentTestPage++;
+                  displayTestPage();
+                  updateTestButtons();
+                } else {
+                  endTest();
+                }
+              }, 800);
+            }
+          } else {
+            playWrong();
+          }
+        });
+        dropContainer.appendChild(div);
+      });
+      container.appendChild(dragContainer);
+      container.appendChild(dropContainer);
+    }
+
+    function prevTestPage() {
+      if(currentTestPage > 0) {
+        currentTestPage--;
+        displayTestPage();
+        updateTestButtons();
+      }
+    }
+
+    function nextTestPage() {
+      if((currentTestPage + 1) * itemsPerPage < testQuestions.length) {
+        currentTestPage++;
+        displayTestPage();
+        updateTestButtons();
+      } else {
+        endTest();
+      }
+    }
+
+    function updateTestButtons() {
+      const prevBtn = document.getElementById("prev-test-btn");
+      const nextBtn = document.getElementById("next-test-btn");
+      prevBtn.style.display = (currentTestPage === 0) ? "none" : "inline-block";
+      nextBtn.style.display = ((currentTestPage + 1) * itemsPerPage >= testQuestions.length) ? "none" : "inline-block";
+    }
+
+    function endTest() {
+      clearInterval(timerInterval);
+      document.getElementById("test-phase").style.display = "none";
+      document.getElementById("result-screen").style.display = "block";
+      // Score sesi
+      scoreSound.currentTime = 0;
+      scoreSound.play();
+      const now = new Date();
+      let elapsed = Math.floor((now - testStartTime) / 1000);
+      let minutes = String(Math.floor(elapsed / 60)).padStart(2, '0');
+      let seconds = String(elapsed % 60).padStart(2, '0');
+      document.getElementById("elapsed-time").innerText = `${minutes}:${seconds}`;
+    }
+
+    function restartTest() {
+      testQuestions = animals.slice();
+      shuffle(testQuestions);
+      currentTestPage = 0;
+      testStartTime = new Date();
+      clearInterval(timerInterval);
+      timerInterval = setInterval(updateTimer, 1000);
+      displayTestPage();
+      updateTestButtons();
+    }
+
+    function returnToLearning() {
+      clearInterval(timerInterval);
+      document.getElementById("learning-phase").style.display = "block";
+      document.getElementById("test-option").style.display = "none";
+      document.getElementById("test-phase").style.display = "none";
+      document.getElementById("result-screen").style.display = "none";
+      startLearning();
+    }
+  </script>
+</body>
+</html>
