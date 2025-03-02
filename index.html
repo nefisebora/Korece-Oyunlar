@@ -121,26 +121,20 @@
     #result-screen {
       display: none;
     }
-    /* Reklam kutusu */
-    .ad-box {
-      margin-top: 30px;
-      padding: 20px;
+    /* Reklam yönlendirmesi için öne çıkan kutu */
+    .ad-container {
+      margin-top: 20px;
+      padding: 15px;
       background-color: #fff;
       border: 2px solid #ffb6c1;
       border-radius: 15px;
-      box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+      animation: pulse 2s infinite;
     }
-    .shimmer {
-      font-size: 24px;
-      font-weight: bold;
-      background: linear-gradient(90deg, #d63384, #ff8da1, #d63384);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      animation: shimmer 2s infinite;
-    }
-    @keyframes shimmer {
-      0% { background-position: -200px; }
-      100% { background-position: 200px; }
+    @keyframes pulse {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.05); }
+      100% { transform: scale(1); }
     }
   </style>
 </head>
@@ -188,19 +182,15 @@
   <div id="result-screen">
     <h2>Tebrikler! 🎉👏</h2>
     <p>Testi <span id="elapsed-time"></span> sürede tamamladın.</p>
-    <p style="font-size:18px; font-weight:600;">
-      Korece öğrenmeye hevesli gibisin, <a href="https://www.derslerim.net/korece-egitim-seti" target="_blank" style="color:#d63384; text-decoration:none;">benimle birlikte korece öğrenmek için tıkla!</a>
-    </p>
+    <div class="ad-container">
+      <p style="font-size:18px; font-weight:600;">
+        Korece öğrenmeye hevesli gibisin, <a href="https://www.derslerim.net/korece-egitim-seti" target="_blank" style="color:#d63384; text-decoration:none;">benimle birlikte korece öğrenmek için tıkla!</a>
+      </p>
+    </div>
     <div class="button-container">
       <button onclick="playClick(); restartTest();">Yeniden Başla</button>
       <button onclick="playClick(); returnToLearning();">Kelime Öğrenmeye Dön</button>
     </div>
-  </div>
-
-  <!-- Reklam Alanı -->
-  <div class="ad-box">
-    <h1 class="shimmer">Korece Öğrenmeni Hızlandırmak için Burayı Ziyaret Et!<br>Sana Bir Süprizim Var!</h1>
-    <p>This is a CSS-only implementation of Facebook's newly-open-sourced iOS Shimmer effect. Check it out on <a href="https://github.com/facebook/Shimmer" target="_blank">GitHub</a>. You can also find a Canvas implementation <a href="https://tedtoy.github.io/ShimmerJS/" target="_blank">here</a>.</p>
   </div>
 
   <script>
@@ -420,7 +410,7 @@
             selectedAnimal.element.classList.add("matched");
             selectedAnimal.element.style.opacity = "0.3";
             selectedAnimal.element.style.pointerEvents = "none";
-            // Temizle: doğru eşleşmeden sonra etkileşim kapatılsın
+            // Doğru eşleştirme yapıldıktan sonra etkileşim kapatılsın
             document.querySelectorAll(".match-animal").forEach(el => el.classList.remove("selected"));
             selectedAnimal = null;
             // Tüm kelimeler eşleştiyse otomatik geçiş
@@ -434,6 +424,7 @@
                   endTest();
                 }
               }, 800);
+            }
           } else {
             playWrong();
             // Yanlış eşleştirme: seçimi temizle
@@ -445,144 +436,4 @@
       });
       
       container.appendChild(animalRow);
-      container.appendChild(wordRow);
-    }
-
-    // ---- Sürükle Bırak Testi ----
-    function displayDragDropTestPage(pageItems, container) {
-      container.innerHTML = "";
-      // Talimat ekleyelim
-      const instr = document.createElement("p");
-      instr.className = "instructions";
-      instr.innerText = "Sürükle Bırak Testi: Hayvan emojisini doğru Korece isminin üzerine sürükleyin.";
-      container.appendChild(instr);
-      
-      // İki ayrı container: sol (draggable) ve sağ (droppable)
-      const dragContainer = document.createElement("div");
-      dragContainer.className = "game-container";
-      const dropContainer = document.createElement("div");
-      dropContainer.className = "game-container";
-
-      let dragItems = pageItems.slice();
-      let dropItems = pageItems.slice();
-      shuffle(dragItems);
-      shuffle(dropItems);
-
-      dragItems.forEach(item => {
-        let div = document.createElement("div");
-        div.className = "draggable";
-        div.draggable = true;
-        div.innerHTML = item.emoji;
-        div.dataset.name = item.name;
-        div.addEventListener("dragstart", function(e) {
-          e.dataTransfer.setData("text/plain", item.name);
-          playClick();
-        });
-        dragContainer.appendChild(div);
-      });
-
-      dropItems.forEach(item => {
-        let div = document.createElement("div");
-        div.className = "droppable";
-        div.innerHTML = item.name;
-        div.dataset.name = item.name;
-        div.addEventListener("dragover", function(e) {
-          e.preventDefault();
-        });
-        div.addEventListener("drop", function(e) {
-          e.preventDefault();
-          let draggedName = e.dataTransfer.getData("text/plain");
-          if(draggedName === div.dataset.name) {
-            playCorrect();
-            div.classList.add("matched");
-            // İşaretlenen draggable'ı da silikleştirelim
-            document.querySelectorAll(".draggable").forEach(d => {
-              if(d.dataset.name === draggedName) {
-                d.classList.add("matched");
-                d.style.opacity = "0.3";
-                d.style.pointerEvents = "none";
-              }
-            });
-            if(document.querySelectorAll(".matched").length >= pageItems.length * 2) {
-              setTimeout(() => {
-                if((currentTestPage + 1) * itemsPerPage < testQuestions.length) {
-                  currentTestPage++;
-                  displayTestPage();
-                  updateTestButtons();
-                } else {
-                  endTest();
-                }
-              }, 800);
-            }
-          } else {
-            playWrong();
-          }
-        });
-        dropContainer.appendChild(div);
-      });
-      container.appendChild(dragContainer);
-      container.appendChild(dropContainer);
-    }
-
-    function prevTestPage() {
-      if(currentTestPage > 0) {
-        currentTestPage--;
-        displayTestPage();
-        updateTestButtons();
-      }
-    }
-
-    function nextTestPage() {
-      // İleri butonu, eşleşmeler tamamlandıysa aktif olacak
-      if((currentTestPage + 1) * itemsPerPage < testQuestions.length) {
-        currentTestPage++;
-        displayTestPage();
-        updateTestButtons();
-      } else {
-        endTest();
-      }
-    }
-
-    function updateTestButtons() {
-      const prevBtn = document.getElementById("prev-test-btn");
-      const nextBtn = document.getElementById("next-test-btn");
-      prevBtn.style.display = (currentTestPage === 0) ? "none" : "inline-block";
-      nextBtn.style.display = ((currentTestPage + 1) * itemsPerPage >= testQuestions.length) ? "none" : "inline-block";
-    }
-
-    function endTest() {
-      clearInterval(timerInterval);
-      document.getElementById("test-phase").style.display = "none";
-      document.getElementById("result-screen").style.display = "block";
-      // Score sesi
-      scoreSound.currentTime = 0;
-      scoreSound.play();
-      const now = new Date();
-      let elapsed = Math.floor((now - testStartTime) / 1000);
-      let minutes = String(Math.floor(elapsed / 60)).padStart(2, '0');
-      let seconds = String(elapsed % 60).padStart(2, '0');
-      document.getElementById("elapsed-time").innerText = `${minutes}:${seconds}`;
-    }
-
-    function restartTest() {
-      testQuestions = animals.slice();
-      shuffle(testQuestions);
-      currentTestPage = 0;
-      testStartTime = new Date();
-      clearInterval(timerInterval);
-      timerInterval = setInterval(updateTimer, 1000);
-      displayTestPage();
-      updateTestButtons();
-    }
-
-    function returnToLearning() {
-      clearInterval(timerInterval);
-      document.getElementById("learning-phase").style.display = "block";
-      document.getElementById("test-option").style.display = "none";
-      document.getElementById("test-phase").style.display = "none";
-      document.getElementById("result-screen").style.display = "none";
-      startLearning();
-    }
-  </script>
-</body>
-</html>
+      container.appendChild
