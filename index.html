@@ -23,9 +23,11 @@
       justify-content: center;
       align-items: center;
       flex-wrap: wrap;
-      margin-top: 20px;
-      gap: 15px;
+      margin: 20px auto;
+      gap: 20px;
+      max-width: 800px;
     }
+    /* Genel kutu stili */
     .animal, .word, .draggable, .droppable {
       width: 22%;
       max-width: 140px;
@@ -78,15 +80,21 @@
     #timer {
       font-size: 20px;
       font-weight: bold;
-      margin: 10px;
+      margin: 10px auto;
     }
-    /* Eşleştirme oyunu için özel düzen */
+    /* Test yönergesi: Zamanlayıcının altında görünsün */
+    #test-instructions {
+      font-size: 16px;
+      color: #555;
+      margin-bottom: 10px;
+    }
+    /* Eşleştirme oyunu düzeni: Üstte hayvan emojileri, altta Korece kelimeler */
     .animal-row, .word-row {
       display: flex;
       justify-content: center;
       align-items: center;
-      gap: 15px;
-      margin: 10px 0;
+      gap: 20px;
+      width: 100%;
     }
     .match-animal {
       width: 80px;
@@ -132,16 +140,11 @@
       margin: 5px auto;
       border-radius: 2px;
     }
-    .instructions {
-      font-size: 16px;
-      color: #555;
-      margin-bottom: 10px;
-    }
     /* Sonuç ekranı */
     #result-screen {
       display: none;
     }
-    /* Reklam kutusu */
+    /* Reklam kutusu: Sonuç ekranında alt kısımda pulsating efekt */
     .ad-container {
       margin: 20px auto;
       padding: 20px;
@@ -202,7 +205,7 @@
   <!-- Test Aşaması -->
   <div id="test-phase" style="display: none;">
     <h2 id="test-title"></h2>
-    <p id="test-instructions" class="instructions"></p>
+    <p id="test-instructions"></p>
     <div id="timer">00:00</div>
     <div class="game-container" id="test-container"></div>
     <div class="button-container">
@@ -247,7 +250,7 @@
       wrongSound.play();
     }
 
-    /* --- Hayvanlar Listesi --- */
+    /* --- Hayvanlar Listesi (20 adet) --- */
     const animals = [
       { emoji: "🐶", name: "강아지" },
       { emoji: "🐱", name: "고양이" },
@@ -364,11 +367,11 @@
       currentTestPage = 0;
       document.getElementById("test-title").innerText =
         (type === "matching") ? "Eşleştirme Alıştırması" : "Sürükle Bırak Alıştırması";
-      // Kısa yönerge ekleyelim
+      // Test yönergesini test-instructions alanına ekleyelim
       document.getElementById("test-instructions").innerText =
         (type === "matching") ?
-          "Yukarıdaki hayvan emojisini seçin ve altındaki doğru Korece kelimeye tıklayın." :
-          "Hayvan emojisini doğru Korece kelime üzerine sürükleyin.";
+          "Üstteki hayvan emojilerini seçin, alt kısımdaki doğru Korece kelimelerle eşleştirin." :
+          "Üstteki hayvan emojilerini sürükleyip, alt kısımdaki doğru Korece kelimelerin üzerine bırakın.";
       startTestPhase();
     }
 
@@ -402,18 +405,12 @@
       }
     }
 
-    /* --- Eşleştirme Testi (Yeni Düzen) --- */
+    /* --- Eşleştirme Testi --- */
     function displayMatchingTestPage(pageItems, container) {
       selectedAnimal = null;
       container.innerHTML = "";
 
-      // Talimat
-      let instr = document.createElement("p");
-      instr.className = "instructions";
-      instr.innerText = "Eşleştirme: Yukarıdaki hayvan emojisini seçin, altındaki doğru Korece kelimeye tıklayın.";
-      container.appendChild(instr);
-
-      // İki satır: Üstte hayvanlar, altta kelimeler
+      // İki satır: Üstte hayvan emojileri, altta Korece kelimeler
       const animalRow = document.createElement("div");
       animalRow.className = "animal-row";
       const wordRow = document.createElement("div");
@@ -447,17 +444,17 @@
           if(div.classList.contains("matched") || !selectedAnimal) return;
           if(item.name === selectedAnimal.name) {
             playCorrect();
-            // Doğru eşleşme: ilgili kelimenin üstünde hayvan emojisi, araya parlak çizgi ekle
+            // Doğru eşleşme: hayvan emojisi, araya çizgi ekleyerek ilgili kelimenin üstünde belirsin
             div.innerHTML = `<div class="matched-emoji">${selectedAnimal.emoji}</div><div class="connection-line"></div><span class="word-text">${item.name}</span>`;
             div.classList.add("matched");
             selectedAnimal.element.classList.add("matched");
-            // Silikleşme ve etkileşimi kapatma
+            // Doğru eşleşmeden sonra her iki eleman da silikleşip etkileşim kapatsın
             selectedAnimal.element.style.opacity = "0.3";
             selectedAnimal.element.style.pointerEvents = "none";
             div.style.opacity = "0.3";
             div.style.pointerEvents = "none";
             selectedAnimal = null;
-            // Tüm çiftler eşleştiyse otomatik sonraki sayfaya geç
+            // Tüm çiftler doğru eşleştiyse otomatik sonraki sayfaya geçiş
             if(document.querySelectorAll(".match-animal.matched").length === pageItems.length &&
                document.querySelectorAll(".match-word.matched").length === pageItems.length) {
               setTimeout(() => {
@@ -485,12 +482,7 @@
 
     /* --- Sürükle Bırak Testi --- */
     function displayDragDropTestPage(pageItems, container) {
-      // Talimat ekleyelim
-      let instr = document.createElement("p");
-      instr.className = "instructions";
-      instr.innerText = "Sürükle Bırak: Hayvan emojisini doğru Korece kelime üzerine sürükleyin.";
-      container.appendChild(instr);
-
+      // Üstte emojiler, altta Korece kelimeler
       const dragContainer = document.createElement("div");
       dragContainer.className = "game-container";
       const dropContainer = document.createElement("div");
@@ -596,6 +588,9 @@
     }
 
     function restartTest() {
+      // Yeniden başla: Sonuç ekranını gizleyip test aşamasını yeniden başlatıyoruz.
+      document.getElementById("result-screen").style.display = "none";
+      document.getElementById("test-phase").style.display = "block";
       testQuestions = animals.slice();
       shuffle(testQuestions);
       currentTestPage = 0;
