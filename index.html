@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Hayvanları Eşleştir!</title>
+  <title>Hayvanları Korece Adlarıyla Eşleştir!</title>
   <!-- Google Fonts: Türkçe karakter desteği için sevimli fontlar -->
   <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito+Sans:wght@400;600&display=swap" rel="stylesheet">
   <style>
@@ -88,8 +88,11 @@
 </head>
 <body>
   <h1>Hayvanları Korece Adlarıyla Eşleştir!</h1>
+
   <!-- Öğrenme Aşaması -->
-  <button id="start-learning-btn" onclick="playClick(); startLearning();">📖 Kelimeleri Öğren</button>
+  <button id="start-learning-btn" onclick="playClick(); startLearning();">
+    📖 Kelimeleri Öğren
+  </button>
   <div id="learning-phase" style="display: none;">
     <h2>Öğrenme Aşaması</h2>
     <div class="game-container" id="learning-container"></div>
@@ -110,4 +113,402 @@
       <button onclick="playClick(); selectTestType('dragdrop');">Sürükle Bırak Alıştırması</button>
     </div>
     <div class="button-container">
-   
+      <button onclick="playClick(); returnToLearning();">Kelime Öğrenmeye Dön</button>
+    </div>
+  </div>
+
+  <!-- Test Aşaması -->
+  <div id="test-phase" style="display: none;">
+    <h2 id="test-title"></h2>
+    <div id="timer">00:00</div>
+    <div class="game-container" id="test-container"></div>
+    <div class="button-container">
+      <button id="prev-test-btn" onclick="playClick(); prevTestPage();">⬅ Önceki</button>
+      <button id="next-test-btn" onclick="playClick(); nextTestPage();">Sonraki ➡</button>
+    </div>
+  </div>
+
+  <!-- Sonuç Ekranı -->
+  <div id="result-screen">
+    <h2>Tebrikler! 🎉👏</h2>
+    <p>Testi <span id="elapsed-time"></span> sürede tamamladın.</p>
+    <p style="font-size:18px; font-weight:600;">
+      Korece öğrenmeye hevesli gibisin,
+      <a href="https://www.derslerim.net/korece-egitim-seti" target="_blank" style="color:#d63384; text-decoration:none;">
+        benimle birlikte korece öğrenmek için tıkla!
+      </a>
+    </p>
+    <div class="button-container">
+      <button onclick="playClick(); restartTest();">Yeniden Başla</button>
+      <button onclick="playClick(); returnToLearning();">Kelime Öğrenmeye Dön</button>
+    </div>
+  </div>
+
+  <script>
+    /* --- Ses Dosyaları ve Fonksiyonlar --- */
+    const clickSound = new Audio('click.mp3');
+    clickSound.volume = 0.2;  // Click sesi alt düzeye çekildi
+    const correctSound = new Audio('correct.mp3');
+    const wrongSound = new Audio('wrong.mp3');
+    // Opsiyonel: Bitiş ekranında çalmak için score.mp3
+    // const scoreSound = new Audio('score.mp3');
+
+    // Fonksiyonlar (Global Scope)
+    function playClick() {
+      clickSound.currentTime = 0;
+      clickSound.play();
+    }
+    function playCorrect() {
+      correctSound.currentTime = 0;
+      correctSound.play();
+    }
+    function playWrong() {
+      wrongSound.currentTime = 0;
+      wrongSound.play();
+    }
+
+    // Hayvanlar listesi (20 adet)
+    const animals = [
+      { emoji: "🐶", name: "강아지" },
+      { emoji: "🐱", name: "고양이" },
+      { emoji: "🐮", name: "소" },
+      { emoji: "🐷", name: "돼지" },
+      { emoji: "🐭", name: "쥐" },
+      { emoji: "🐹", name: "햄스터" },
+      { emoji: "🐰", name: "토끼" },
+      { emoji: "🦊", name: "여우" },
+      { emoji: "🐻", name: "곰" },
+      { emoji: "🐼", name: "판다" },
+      { emoji: "🐨", name: "코알라" },
+      { emoji: "🦁", name: "사자" },
+      { emoji: "🐸", name: "개구리" },
+      { emoji: "🐢", name: "거북이" },
+      { emoji: "🐍", name: "뱀" },
+      { emoji: "🦉", name: "부엉이" },
+      { emoji: "🐘", name: "코끼리" },
+      { emoji: "🦒", name: "기린" },
+      { emoji: "🦅", name: "독수리" },
+      { emoji: "🐔", name: "닭" }
+    ];
+
+    /* --- Öğrenme Aşaması Değişkenleri --- */
+    let currentPage = 0;
+    const itemsPerPage = 5;
+
+    /* --- Test Aşaması Değişkenleri --- */
+    let testQuestions = [];
+    let currentTestPage = 0;
+    let currentTestType = "";
+    let testStartTime;
+    let timerInterval;
+    let selectedAnimal = null;
+
+    /* --- Rastgele Karıştırma (Fisher-Yates) --- */
+    function shuffle(array) {
+      for (let i = array.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [array[i], array[j]] = [array[j], array[i]];
+      }
+    }
+
+    /* --- Öğrenme Aşaması Fonksiyonları --- */
+    function startLearning() {
+      document.getElementById("learning-phase").style.display = "block";
+      document.getElementById("test-option").style.display = "none";
+      document.getElementById("test-phase").style.display = "none";
+      document.getElementById("result-screen").style.display = "none";
+      currentPage = 0;
+      displayPage();
+      updateLearnButtons();
+    }
+
+    function displayPage() {
+      const container = document.getElementById("learning-container");
+      container.innerHTML = "";
+      let pageItems = animals.slice(currentPage * itemsPerPage, (currentPage + 1) * itemsPerPage);
+      shuffle(pageItems); // İsteğe bağlı
+      pageItems.forEach(animal => {
+        let div = document.createElement("div");
+        div.classList.add("animal");
+        div.innerHTML = `${animal.emoji}<br><small>${animal.name}</small>`;
+        div.onclick = () => {
+          playTTS(animal.name);
+          playClick();
+        };
+        container.appendChild(div);
+      });
+    }
+
+    function playTTS(text) {
+      const speech = new SpeechSynthesisUtterance(text);
+      speech.lang = "ko-KR";
+      speech.rate = 1.0;
+      speech.pitch = 1.1;
+      speechSynthesis.cancel();
+      speechSynthesis.speak(speech);
+    }
+
+    function prevPage() {
+      if (currentPage > 0) {
+        currentPage--;
+        displayPage();
+        updateLearnButtons();
+      }
+    }
+
+    function nextPage() {
+      if ((currentPage + 1) * itemsPerPage < animals.length) {
+        currentPage++;
+        displayPage();
+        updateLearnButtons();
+      }
+    }
+
+    function updateLearnButtons() {
+      const prevBtn = document.getElementById("prev-learn-btn");
+      const nextBtn = document.getElementById("next-learn-btn");
+      prevBtn.style.display = (currentPage === 0) ? "none" : "inline-block";
+      nextBtn.style.display = ((currentPage + 1) * itemsPerPage >= animals.length) ? "none" : "inline-block";
+    }
+
+    /* --- Test Seçimi --- */
+    function startTestOption() {
+      document.getElementById("learning-phase").style.display = "none";
+      document.getElementById("test-option").style.display = "block";
+    }
+
+    function selectTestType(type) {
+      currentTestType = type;
+      testQuestions = animals.slice();
+      shuffle(testQuestions);
+      currentTestPage = 0;
+      document.getElementById("test-title").innerText =
+        (type === "matching") ? "Eşleştirme Alıştırması" : "Sürükle Bırak Alıştırması";
+      startTestPhase();
+    }
+
+    /* --- Test Aşaması Fonksiyonları --- */
+    function startTestPhase() {
+      document.getElementById("test-option").style.display = "none";
+      document.getElementById("test-phase").style.display = "block";
+      document.getElementById("result-screen").style.display = "none";
+      testStartTime = new Date();
+      timerInterval = setInterval(updateTimer, 1000);
+      displayTestPage();
+      updateTestButtons();
+    }
+
+    function updateTimer() {
+      const now = new Date();
+      let elapsed = Math.floor((now - testStartTime) / 1000);
+      let minutes = String(Math.floor(elapsed / 60)).padStart(2, '0');
+      let seconds = String(elapsed % 60).padStart(2, '0');
+      document.getElementById("timer").innerText = `${minutes}:${seconds}`;
+    }
+
+    function displayTestPage() {
+      const container = document.getElementById("test-container");
+      container.innerHTML = "";
+      let pageItems = testQuestions.slice(currentTestPage * itemsPerPage, (currentTestPage + 1) * itemsPerPage);
+      if (currentTestType === "matching") {
+        displayMatchingTestPage(pageItems, container);
+      } else {
+        displayDragDropTestPage(pageItems, container);
+      }
+    }
+
+    // Eşleştirme Testi
+    function displayMatchingTestPage(pageItems, container) {
+      selectedAnimal = null;
+      const animalDiv = document.createElement("div");
+      animalDiv.className = "game-container";
+      const wordDiv = document.createElement("div");
+      wordDiv.className = "game-container";
+
+      let animalItems = pageItems.slice();
+      let wordItems = pageItems.slice();
+      shuffle(animalItems);
+      shuffle(wordItems);
+
+      animalItems.forEach(item => {
+        let div = document.createElement("div");
+        div.className = "animal";
+        div.innerHTML = item.emoji;
+        div.onclick = function() {
+          playClick();
+          if (div.classList.contains("matched")) return;
+          if (selectedAnimal) {
+            document.querySelectorAll(".animal").forEach(el => el.classList.remove("selected"));
+            selectedAnimal = null;
+          }
+          div.classList.add("selected");
+          selectedAnimal = { element: div, name: item.name };
+        };
+        animalDiv.appendChild(div);
+      });
+
+      wordItems.forEach(item => {
+        let div = document.createElement("div");
+        div.className = "word";
+        div.innerHTML = item.name;
+        div.onclick = function() {
+          playClick();
+          if (!selectedAnimal) return;
+          if (item.name === selectedAnimal.name) {
+            playCorrect();
+            selectedAnimal.element.classList.add("matched");
+            div.classList.add("matched");
+            selectedAnimal = null;
+            // Tüm eşleşmeler tamam mı?
+            if (document.querySelectorAll(".matched").length === pageItems.length * 2) {
+              setTimeout(() => {
+                if ((currentTestPage + 1) * itemsPerPage < testQuestions.length) {
+                  currentTestPage++;
+                  displayTestPage();
+                  updateTestButtons();
+                } else {
+                  endTest();
+                }
+              }, 500);
+            }
+          } else {
+            playWrong();
+            document.querySelectorAll(".animal").forEach(el => el.classList.remove("selected"));
+            selectedAnimal = null;
+          }
+        };
+        wordDiv.appendChild(div);
+      });
+
+      container.appendChild(animalDiv);
+      container.appendChild(wordDiv);
+    }
+
+    // Sürükle Bırak Testi
+    function displayDragDropTestPage(pageItems, container) {
+      const dragContainer = document.createElement("div");
+      dragContainer.className = "game-container";
+      const dropContainer = document.createElement("div");
+      dropContainer.className = "game-container";
+
+      let dragItems = pageItems.slice();
+      let dropItems = pageItems.slice();
+      shuffle(dragItems);
+      shuffle(dropItems);
+
+      dragItems.forEach(item => {
+        let div = document.createElement("div");
+        div.className = "draggable";
+        div.draggable = true;
+        div.innerHTML = item.emoji;
+        div.dataset.name = item.name;
+        div.addEventListener("dragstart", function(e) {
+          e.dataTransfer.setData("text/plain", item.name);
+          playClick();
+        });
+        dragContainer.appendChild(div);
+      });
+
+      dropItems.forEach(item => {
+        let div = document.createElement("div");
+        div.className = "droppable";
+        div.innerHTML = item.name;
+        div.dataset.name = item.name;
+        div.addEventListener("dragover", function(e) {
+          e.preventDefault();
+        });
+        div.addEventListener("drop", function(e) {
+          e.preventDefault();
+          let draggedName = e.dataTransfer.getData("text/plain");
+          if (draggedName === div.dataset.name) {
+            playCorrect();
+            div.classList.add("matched");
+            document.querySelectorAll(".draggable").forEach(d => {
+              if (d.dataset.name === draggedName) {
+                d.classList.add("matched");
+              }
+            });
+            if (document.querySelectorAll(".matched").length >= pageItems.length * 2) {
+              setTimeout(() => {
+                if ((currentTestPage + 1) * itemsPerPage < testQuestions.length) {
+                  currentTestPage++;
+                  displayTestPage();
+                  updateTestButtons();
+                } else {
+                  endTest();
+                }
+              }, 500);
+            }
+          } else {
+            playWrong();
+          }
+        });
+        dropContainer.appendChild(div);
+      });
+
+      container.appendChild(dragContainer);
+      container.appendChild(dropContainer);
+    }
+
+    function prevTestPage() {
+      if (currentTestPage > 0) {
+        currentTestPage--;
+        displayTestPage();
+        updateTestButtons();
+      }
+    }
+
+    function nextTestPage() {
+      if ((currentTestPage + 1) * itemsPerPage < testQuestions.length) {
+        currentTestPage++;
+        displayTestPage();
+        updateTestButtons();
+      } else {
+        endTest();
+      }
+    }
+
+    function updateTestButtons() {
+      const prevBtn = document.getElementById("prev-test-btn");
+      const nextBtn = document.getElementById("next-test-btn");
+      prevBtn.style.display = (currentTestPage === 0) ? "none" : "inline-block";
+      nextBtn.style.display = ((currentTestPage + 1) * itemsPerPage >= testQuestions.length) ? "none" : "inline-block";
+    }
+
+    function endTest() {
+      clearInterval(timerInterval);
+      document.getElementById("test-phase").style.display = "none";
+      document.getElementById("result-screen").style.display = "block";
+      // Opsiyonel: bitişte score.mp3 çalmak isterseniz
+      // scoreSound.currentTime = 0;
+      // scoreSound.play();
+
+      const now = new Date();
+      let elapsed = Math.floor((now - testStartTime) / 1000);
+      let minutes = String(Math.floor(elapsed / 60)).padStart(2, '0');
+      let seconds = String(elapsed % 60).padStart(2, '0');
+      document.getElementById("elapsed-time").innerText = `${minutes}:${seconds}`;
+    }
+
+    function restartTest() {
+      testQuestions = animals.slice();
+      shuffle(testQuestions);
+      currentTestPage = 0;
+      testStartTime = new Date();
+      clearInterval(timerInterval);
+      timerInterval = setInterval(updateTimer, 1000);
+      displayTestPage();
+      updateTestButtons();
+    }
+
+    function returnToLearning() {
+      clearInterval(timerInterval);
+      document.getElementById("learning-phase").style.display = "block";
+      document.getElementById("test-option").style.display = "none";
+      document.getElementById("test-phase").style.display = "none";
+      document.getElementById("result-screen").style.display = "none";
+      startLearning();
+    }
+  </script>
+</body>
+</html>
