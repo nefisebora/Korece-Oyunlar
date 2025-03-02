@@ -26,9 +26,9 @@
       margin-top: 20px;
       gap: 15px;
     }
-    .animal, .word, .draggable, .droppable {
-      width: 22%;
-      max-width: 140px;
+    /* Genel kutu stili */
+    .animal, .word, .draggable, .droppable, .match-animal, .match-word {
+      width: 140px;
       height: 140px;
       margin: 10px;
       padding: 15px;
@@ -39,14 +39,13 @@
       display: flex;
       justify-content: center;
       align-items: center;
-      flex-direction: column;
-      cursor: pointer;
       font-size: 24px;
       transition: transform 0.3s ease, box-shadow 0.3s ease;
       text-align: center;
       user-select: none;
+      cursor: pointer;
     }
-    .animal:hover, .word:hover, .draggable:hover, .droppable:hover {
+    .animal:hover, .word:hover, .draggable:hover, .droppable:hover, .match-animal:hover, .match-word:hover {
       transform: scale(1.05);
       box-shadow: 5px 5px 15px rgba(0, 0, 0, 0.2);
     }
@@ -80,9 +79,68 @@
       font-weight: bold;
       margin: 10px;
     }
+    /* Eşleştirme oyununa özel düzen */
+    .animal-row, .word-row {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 15px;
+      margin-bottom: 10px;
+    }
+    .match-animal {
+      border-radius: 50%;
+      background-color: #fff;
+      font-size: 32px;
+    }
+    .match-word {
+      flex-direction: column;
+      position: relative;
+    }
+    .match-word .word-text {
+      font-size: 20px;
+      font-weight: 600;
+    }
+    .matched-emoji {
+      font-size: 28px;
+      opacity: 0.6;
+    }
+    .connection-line {
+      width: 80%;
+      height: 4px;
+      background-color: #ff8da1;
+      margin: 5px auto;
+      border-radius: 2px;
+    }
+    /* Talimat yazıları */
+    .instructions {
+      font-size: 16px;
+      color: #555;
+      margin-bottom: 10px;
+    }
     /* Sonuç ekranı */
     #result-screen {
       display: none;
+    }
+    /* Reklam kutusu */
+    .ad-box {
+      margin-top: 30px;
+      padding: 20px;
+      background-color: #fff;
+      border: 2px solid #ffb6c1;
+      border-radius: 15px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    }
+    .shimmer {
+      font-size: 24px;
+      font-weight: bold;
+      background: linear-gradient(90deg, #d63384, #ff8da1, #d63384);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      animation: shimmer 2s infinite;
+    }
+    @keyframes shimmer {
+      0% { background-position: -200px; }
+      100% { background-position: 200px; }
     }
   </style>
 </head>
@@ -117,6 +175,7 @@
   <!-- Test Aşaması -->
   <div id="test-phase" style="display: none;">
     <h2 id="test-title"></h2>
+    <p id="test-instructions" class="instructions"></p>
     <div id="timer">00:00</div>
     <div class="game-container" id="test-container"></div>
     <div class="button-container">
@@ -138,22 +197,28 @@
     </div>
   </div>
 
+  <!-- Reklam Alanı -->
+  <div class="ad-box">
+    <h1 class="shimmer">Korece Öğrenmeni Hızlandırmak için Burayı Ziyaret Et!<br>Sana Bir Süprizim Var!</h1>
+    <p>This is a CSS-only implementation of Facebook's newly-open-sourced iOS Shimmer effect. Check it out on <a href="https://github.com/facebook/Shimmer" target="_blank">GitHub</a>. You can also find a Canvas implementation <a href="https://tedtoy.github.io/ShimmerJS/" target="_blank">here</a>.</p>
+  </div>
+
   <script>
-    // Ses efektleri için dosya isimleri: click.mp3, correct.mp3, wrong.mp3
+    // Ses efektleri: click sesi hafif, diğerleri normal (dosya isimleri: click.mp3, correct.mp3, wrong.mp3, score.mp3)
     const clickSound = new Audio('click.mp3');
+    clickSound.volume = 0.2; // click sesi hafif olsun
     const correctSound = new Audio('correct.mp3');
     const wrongSound = new Audio('wrong.mp3');
+    const scoreSound = new Audio('score.mp3');
 
     function playClick() {
       clickSound.currentTime = 0;
       clickSound.play();
     }
-
     function playCorrect() {
       correctSound.currentTime = 0;
       correctSound.play();
     }
-
     function playWrong() {
       wrongSound.currentTime = 0;
       wrongSound.play();
@@ -193,7 +258,7 @@
     let currentTestType = ""; // "matching" veya "dragdrop"
     let testStartTime;
     let timerInterval;
-    let selectedAnimal = null; // Eşleştirme testi için
+    let selectedAnimal = null; // eşleştirme testi için seçim saklama
 
     // Sayfayı karıştırma (Fisher-Yates)
     function shuffle(array) {
@@ -203,7 +268,7 @@
       }
     }
 
-    // ------------------ Öğrenme Aşaması Fonksiyonları ------------------
+    // ------------------ Öğrenme Aşaması ------------------
     function startLearning() {
       document.getElementById("learning-phase").style.display = "block";
       document.getElementById("test-option").style.display = "none";
@@ -218,7 +283,7 @@
       const container = document.getElementById("learning-container");
       container.innerHTML = "";
       let pageItems = animals.slice(currentPage * itemsPerPage, (currentPage + 1) * itemsPerPage);
-      // Her seferinde rastgele sıralamak için (öğrenmede istenmese de ekleyebilirsiniz)
+      // Rastgele sıralama (isteğe bağlı)
       shuffle(pageItems);
       pageItems.forEach(animal => {
         let div = document.createElement("div");
@@ -261,21 +326,22 @@
       nextBtn.style.display = ((currentPage + 1) * itemsPerPage >= animals.length) ? "none" : "inline-block";
     }
 
-    // ------------------ Test Aşaması Fonksiyonları ------------------
+    // ------------------ Test Aşaması ------------------
     function startTestOption() {
-      // Öğrenme aşamasını gizle, test seçenek ekranını göster
       document.getElementById("learning-phase").style.display = "none";
       document.getElementById("test-option").style.display = "block";
     }
 
     function selectTestType(type) {
       currentTestType = type;
-      // Test sorularını karıştırarak kopyala (orijinal dizi bozulmasın)
       testQuestions = animals.slice();
       shuffle(testQuestions);
       currentTestPage = 0;
-      // Test ekran başlığını belirle
       document.getElementById("test-title").innerText = type === "matching" ? "Eşleştirme Alıştırması" : "Sürükle Bırak Alıştırması";
+      // Teste özel yönerge
+      document.getElementById("test-instructions").innerText = type === "matching" ?
+        "Hayvan emojisini seçin ve alt kısımdaki doğru Korece ismiyle eşleştirin." :
+        "Hayvan emojisini doğru Korece isminin üzerine sürükleyin.";
       startTestPhase();
     }
 
@@ -283,9 +349,7 @@
       document.getElementById("test-option").style.display = "none";
       document.getElementById("test-phase").style.display = "block";
       document.getElementById("result-screen").style.display = "none";
-      // Başlangıç zamanı
       testStartTime = new Date();
-      // Timer güncelleme
       timerInterval = setInterval(updateTimer, 1000);
       displayTestPage();
       updateTestButtons();
@@ -302,9 +366,8 @@
     function displayTestPage() {
       const container = document.getElementById("test-container");
       container.innerHTML = "";
-      // Sayfa sorularını al (her sayfada itemsPerPage adet)
       let pageItems = testQuestions.slice(currentTestPage * itemsPerPage, (currentTestPage + 1) * itemsPerPage);
-      // Her sayfa için yine rastgele sıralama yapılacak
+      // Her sayfa için rastgele sıralama
       if(currentTestType === "matching") {
         displayMatchingTestPage(pageItems, container);
       } else if(currentTestType === "dragdrop") {
@@ -312,57 +375,56 @@
       }
     }
 
-    // Eşleştirme testi: iki sütun, biri hayvan emoji, diğeri isimler
+    // ---- Eşleştirme Testi: Yeni Düzen (Hayvanlar üstte, Korece altta) ----
     function displayMatchingTestPage(pageItems, container) {
-      selectedAnimal = null; // Seçim sıfırlansın
-      // İki ayrı container oluştur
-      const animalDiv = document.createElement("div");
-      animalDiv.className = "game-container";
-      const wordDiv = document.createElement("div");
-      wordDiv.className = "game-container";
+      // Sıfırla
+      selectedAnimal = null;
+      container.innerHTML = "";
       
-      // Kopyaları oluşturalım ve karıştıralım
-      let animalItems = pageItems.slice();
-      let wordItems = pageItems.slice();
-      shuffle(animalItems);
-      shuffle(wordItems);
-
-      animalItems.forEach(item => {
+      // Üstte hayvanlar, altta kelimeler için iki satır oluşturalım
+      const animalRow = document.createElement("div");
+      animalRow.className = "animal-row";
+      const wordRow = document.createElement("div");
+      wordRow.className = "word-row";
+      
+      // Rastgele sıralama
+      let animalsOrder = pageItems.slice();
+      let wordsOrder = pageItems.slice();
+      shuffle(animalsOrder);
+      shuffle(wordsOrder);
+      
+      animalsOrder.forEach(item => {
         let div = document.createElement("div");
-        div.className = "animal";
+        div.className = "match-animal";
         div.innerHTML = item.emoji;
-        // Tıklayınca seçilsin
         div.onclick = function() {
-          playClick();
-          // Eğer zaten eşleştirilmişse işlem yapma
           if(div.classList.contains("matched")) return;
-          // Seçim varsa, seçimi kaldır
-          if(selectedAnimal) {
-            document.querySelectorAll(".animal").forEach(el => el.classList.remove("selected"));
-            selectedAnimal = null;
-          }
+          document.querySelectorAll(".match-animal").forEach(el => el.classList.remove("selected"));
           div.classList.add("selected");
-          selectedAnimal = { element: div, name: item.name };
+          selectedAnimal = { element: div, name: item.name, item: item };
         };
-        animalDiv.appendChild(div);
+        animalRow.appendChild(div);
       });
-
-      wordItems.forEach(item => {
+      
+      wordsOrder.forEach(item => {
         let div = document.createElement("div");
-        div.className = "word";
-        div.innerHTML = item.name;
-        // Tıklayınca kontrol edelim
+        div.className = "match-word";
+        div.innerHTML = `<span class="word-text">${item.name}</span>`;
         div.onclick = function() {
-          playClick();
-          if(!selectedAnimal) return;
-          // Doğru eşleşme kontrolü
-          if(item.name === selectedAnimal.name) {
+          if(div.classList.contains("matched") || !selectedAnimal) return;
+          if(selectedAnimal.name === item.name) {
             playCorrect();
-            selectedAnimal.element.classList.add("matched");
+            // Doğru eşleşme: kelimenin üstüne hayvan simgesini ekle, parlak çizgi göster
+            div.innerHTML = `<div class="matched-emoji">${selectedAnimal.item.emoji}</div><div class="connection-line"></div><span class="word-text">${item.name}</span>`;
             div.classList.add("matched");
+            selectedAnimal.element.classList.add("matched");
+            selectedAnimal.element.style.opacity = "0.3";
+            selectedAnimal.element.style.pointerEvents = "none";
+            // Temizle: doğru eşleşmeden sonra etkileşim kapatılsın
+            document.querySelectorAll(".match-animal").forEach(el => el.classList.remove("selected"));
             selectedAnimal = null;
-            // Eğer sayfadaki tüm eşleşmeler yapıldıysa otomatik sonraki sayfaya geçiş veya test bitişi
-            if(document.querySelectorAll(".matched").length === pageItems.length * 2) {
+            // Tüm kelimeler eşleştiyse otomatik geçiş
+            if(document.querySelectorAll(".match-word.matched").length === pageItems.length) {
               setTimeout(() => {
                 if((currentTestPage + 1) * itemsPerPage < testQuestions.length) {
                   currentTestPage++;
@@ -371,24 +433,31 @@
                 } else {
                   endTest();
                 }
-              }, 500);
-            }
+              }, 800);
           } else {
             playWrong();
-            // Yanlışsa seçim iptal edilsin
-            document.querySelectorAll(".animal").forEach(el => el.classList.remove("selected"));
+            // Yanlış eşleştirme: seçimi temizle
+            document.querySelectorAll(".match-animal").forEach(el => el.classList.remove("selected"));
             selectedAnimal = null;
           }
         };
-        wordDiv.appendChild(div);
+        wordRow.appendChild(div);
       });
-      container.appendChild(animalDiv);
-      container.appendChild(wordDiv);
+      
+      container.appendChild(animalRow);
+      container.appendChild(wordRow);
     }
 
-    // Sürükle Bırak testi: Draggable hayvanlar ve droppable isim kutuları
+    // ---- Sürükle Bırak Testi ----
     function displayDragDropTestPage(pageItems, container) {
-      // İki container oluştur
+      container.innerHTML = "";
+      // Talimat ekleyelim
+      const instr = document.createElement("p");
+      instr.className = "instructions";
+      instr.innerText = "Sürükle Bırak Testi: Hayvan emojisini doğru Korece isminin üzerine sürükleyin.";
+      container.appendChild(instr);
+      
+      // İki ayrı container: sol (draggable) ve sağ (droppable)
       const dragContainer = document.createElement("div");
       dragContainer.className = "game-container";
       const dropContainer = document.createElement("div");
@@ -426,14 +495,14 @@
           if(draggedName === div.dataset.name) {
             playCorrect();
             div.classList.add("matched");
-            // Bulunan draggable'ı da işaretleyelim
-            let draggables = document.querySelectorAll(".draggable");
-            draggables.forEach(d => {
+            // İşaretlenen draggable'ı da silikleştirelim
+            document.querySelectorAll(".draggable").forEach(d => {
               if(d.dataset.name === draggedName) {
                 d.classList.add("matched");
+                d.style.opacity = "0.3";
+                d.style.pointerEvents = "none";
               }
             });
-            // Tüm eşleşmeler yapıldı mı?
             if(document.querySelectorAll(".matched").length >= pageItems.length * 2) {
               setTimeout(() => {
                 if((currentTestPage + 1) * itemsPerPage < testQuestions.length) {
@@ -443,7 +512,7 @@
                 } else {
                   endTest();
                 }
-              }, 500);
+              }, 800);
             }
           } else {
             playWrong();
@@ -464,10 +533,8 @@
     }
 
     function nextTestPage() {
-      // Kullanıcı sayfayı tamamlamadan "ileri" butonuna basarsa hiçbir işlem yapmayalım.
-      // İleri butonu, sayfa tamamlandığında (eşleşmeler yapıldığında) aktif olsun.
+      // İleri butonu, eşleşmeler tamamlandıysa aktif olacak
       if((currentTestPage + 1) * itemsPerPage < testQuestions.length) {
-        // Bu buton normalde, tüm eşleşmeler tamamlandıysa aktif hale gelecek.
         currentTestPage++;
         displayTestPage();
         updateTestButtons();
@@ -487,7 +554,9 @@
       clearInterval(timerInterval);
       document.getElementById("test-phase").style.display = "none";
       document.getElementById("result-screen").style.display = "block";
-      // Hesaplanan süreyi göster
+      // Score sesi
+      scoreSound.currentTime = 0;
+      scoreSound.play();
       const now = new Date();
       let elapsed = Math.floor((now - testStartTime) / 1000);
       let minutes = String(Math.floor(elapsed / 60)).padStart(2, '0');
@@ -496,7 +565,6 @@
     }
 
     function restartTest() {
-      // Testi yeniden başlat: test sorularını yeniden karıştır, sayfayı sıfırla ve timer yeniden başlasın
       testQuestions = animals.slice();
       shuffle(testQuestions);
       currentTestPage = 0;
